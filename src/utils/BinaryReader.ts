@@ -27,6 +27,18 @@ export class BinaryReader {
     return v
   }
 
+  readUInt16() {
+    const v = this.buffer.readUInt16LE(this.offset)
+    this.offset += 2
+    return v
+  }
+
+  readInt16() {
+    const v = this.buffer.readInt16LE(this.offset)
+    this.offset += 2
+    return v
+  }
+
   readUInt32() {
     const v = this.buffer.readUInt32LE(this.offset)
     this.offset += 4

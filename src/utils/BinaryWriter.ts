@@ -21,6 +21,20 @@ export class BinaryWriter {
     this.length += 1
   }
 
+  writeUInt16(v: number) {
+    const b = Buffer.allocUnsafe(2)
+    b.writeUInt16LE(v >>> 0)
+    this.chunks.push(b)
+    this.length += 2
+  }
+
+  writeInt16(v: number) {
+    const b = Buffer.allocUnsafe(2)
+    b.writeUInt16LE(v | 0)
+    this.chunks.push(b)
+    this.length += 2
+  }
+
   writeUInt32(v: number) {
     const b = Buffer.allocUnsafe(4)
     b.writeUInt32LE(v >>> 0)

@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { ZBinaryReader } from './utils/ZBinaryReader.ts'
 import { Scene } from './zengine/scn/Scene.ts'
 
-const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\md_9999.scn`
+const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sd_1000.scn`
 const buffer = fs.readFileSync(pathToFile)
 const reader = new ZBinaryReader(buffer)
 const scn = Scene.read(reader)
