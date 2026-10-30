@@ -1,5 +1,5 @@
-import type { BinaryReader } from "../utils/BinaryReader.ts";
-import type { BinaryWriter } from "../utils/BinaryWriter.ts";
+import type { BinaryReader } from '../utils/BinaryReader.ts'
+import type { BinaryWriter } from '../utils/BinaryWriter.ts'
 
 export const GameStateModType = {
   DisableAttackTrigger: 0,
@@ -8,7 +8,7 @@ export const GameStateModType = {
   DisableTrigger: 3,
   RemoveModel: 4,
   SetTrigger: 5,
-  SetNPCModifier: 6
+  SetNPCModifier: 6,
 }
 
 export class GSModDisableAttackTrigger {
@@ -104,7 +104,13 @@ export class GSModSetTrigger {
   ii3: number
   ii4: number
 
-  constructor(triggerId: number, ii1: number, ii2: number, ii3: number, ii4: number) {
+  constructor(
+    triggerId: number,
+    ii1: number,
+    ii2: number,
+    ii3: number,
+    ii4: number,
+  ) {
     this.triggerId = triggerId
     this.ii1 = ii1
     this.ii2 = ii2
@@ -126,7 +132,7 @@ export class GSModSetTrigger {
       handle.readUInt32(),
       handle.readUInt32(),
       handle.readUInt32(),
-      handle.readUInt32()
+      handle.readUInt32(),
     )
   }
 }
@@ -154,7 +160,7 @@ export class GameStateMod {
   static read(handle: BinaryReader) {
     const type = handle.readInt32()
 
-    switch(type) {
+    switch (type) {
       case GameStateModType.DisableAttackTrigger:
         return GSModDisableAttackTrigger.read(handle)
       case GameStateModType.RemoveItem:
@@ -170,7 +176,9 @@ export class GameStateMod {
       case GameStateModType.SetNPCModifier:
         return GSModSetNPCModifier.read(handle)
       default:
-        throw new Error(`GameStateMod.read: Unsupported GameState Modifier: ${type}`)
+        throw new Error(
+          `GameStateMod.read: Unsupported GameState Modifier: ${type}`,
+        )
     }
   }
 }

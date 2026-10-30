@@ -2,27 +2,28 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { BinaryReader } from '../../utils/BinaryReader.ts'
-import { BinaryWriter } from '../../utils/BinaryWriter.ts'
 
-const listDirFiles = (rootDir: string) => {
-  const files: string[] = []
+// import { BinaryWriter } from '../../utils/BinaryWriter.ts'
 
-  const walk = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const fullPath = path.join(dir, entry.name)
+// const listDirFiles = (rootDir: string) => {
+//   const files: string[] = []
 
-      if (entry.isDirectory()) {
-        walk(fullPath)
-      } else if (entry.isFile()) {
-        files.push(path.relative(rootDir, fullPath))
-      }
-    }
-  }
+//   const walk = (dir: string) => {
+//     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+//       const fullPath = path.join(dir, entry.name)
 
-  walk(rootDir)
+//       if (entry.isDirectory()) {
+//         walk(fullPath)
+//       } else if (entry.isFile()) {
+//         files.push(path.relative(rootDir, fullPath))
+//       }
+//     }
+//   }
 
-  return files
-}
+//   walk(rootDir)
+
+//   return files
+// }
 
 type PAKEntry = {
   path: string
@@ -34,7 +35,7 @@ export class PAKArchive {
   public id: number
   public count: number
   public entries: PAKEntry[]
-  
+
   private handle: BinaryReader | null
   private entriesOffset: number
 
@@ -53,18 +54,18 @@ export class PAKArchive {
     this.handle = new BinaryReader(buffer)
 
     this.id = this.handle.readUInt32() //4 bytes
-    this.count =  this.handle.readUInt32() //4 bytes
+    this.count = this.handle.readUInt32() //4 bytes
 
-    for(let i = 0; i < this.count; ++i) {
-      const pathLength =  this.handle.readUInt32() //4 bytes
-      const path =  this.handle.readString(pathLength) //4 * (pathLength * 4) bytes
-      const offset =  this.handle.readUInt32() //4 bytes
-      const size =  this.handle.readUInt32() //4 bytes
+    for (let i = 0; i < this.count; ++i) {
+      const pathLength = this.handle.readUInt32() //4 bytes
+      const path = this.handle.readString(pathLength) //4 * (pathLength * 4) bytes
+      const offset = this.handle.readUInt32() //4 bytes
+      const size = this.handle.readUInt32() //4 bytes
 
       this.entries.push({
         path,
         offset,
-        size
+        size,
       })
     }
 
@@ -72,10 +73,10 @@ export class PAKArchive {
   }
 
   unpack(pathToUnpack: string) {
-    if (!this.handle) throw new Error("PAK should be opened first")
+    if (!this.handle) throw new Error('PAK should be opened first')
     if (!fs.existsSync(pathToUnpack)) throw new Error("Path doesn't exists")
 
-    for(let i = 0; i < this.entries.length; ++i) {
+    for (let i = 0; i < this.entries.length; ++i) {
       const entry = this.entries[i]
 
       this.handle.seek(this.entriesOffset + entry.offset)
@@ -84,13 +85,13 @@ export class PAKArchive {
       const attributes = this.handle.readUInt32()
       const fileBuffer = this.handle.readBytes(entry.size - 4)
 
-      const normalizedFilePath = `${pathToUnpack}/${entry.path.replace(/^\.\.[\\/]/, '')}` 
+      const normalizedFilePath = `${pathToUnpack}/${entry.path.replace(/^\.\.[\\/]/, '')}`
 
       fs.mkdirSync(path.dirname(normalizedFilePath), { recursive: true })
 
       fs.writeFileSync(normalizedFilePath, fileBuffer)
 
-      console.log(`[${i+1}/${this.entries.length}] ${normalizedFilePath}`)
+      console.log(`[${i + 1}/${this.entries.length}] ${normalizedFilePath}`)
     }
   }
 
@@ -105,7 +106,6 @@ export class PAKArchive {
   //   const buffer1 = Buffer.alloc()
   //   for(let i = 0; i < files.length; ++i) {
   //   }
-
 
   //   writer.writeUInt32(0)
   //   writer.writeUInt32(files.length)

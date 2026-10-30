@@ -1,4 +1,4 @@
-import type { ZBinaryReader } from "../utils/ZBinaryReader.ts"
+import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 
 export type PAKArchiveEntry = {
   path: string
@@ -19,7 +19,7 @@ export class PAKArchive {
     const id = handler.readUInt32()
     const entriesCount = handler.readUInt32()
     const entries = new Array(entriesCount)
-    for(let i = 0; i < entriesCount; ++i) {
+    for (let i = 0; i < entriesCount; ++i) {
       const path = handler.readZString()
       const offset = handler.readUInt32()
       const size = handler.readUInt32()
@@ -27,7 +27,7 @@ export class PAKArchive {
       entries[i] = {
         path,
         offset,
-        size
+        size,
       }
     }
 

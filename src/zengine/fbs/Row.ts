@@ -1,6 +1,6 @@
-import type { BinaryReader } from "../../utils/BinaryReader.ts";
-import type { BinaryWriter } from "../../utils/BinaryWriter.ts";
-import { Cell } from "./Cell.ts";
+import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
+import { Cell } from './Cell.ts'
 
 export class Row {
   uid: number
@@ -11,19 +11,19 @@ export class Row {
     this.cells = []
   }
 
-  write(handler: BinaryWriter) {
+  write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.uid)
     handler.writeUInt32(this.cells.length)
-    for(let i = 0; i < this.cells.length; ++i) {
+    for (let i = 0; i < this.cells.length; ++i) {
       this.cells[i].write(handler)
     }
   }
 
-  static read(handler: BinaryReader) {
+  static read(handler: ZBinaryReader) {
     const uid = handler.readUInt32()
     const cellsCount = handler.readUInt32()
     const cells = new Array(cellsCount)
-    for(let i = 0; i < cellsCount; ++i) {
+    for (let i = 0; i < cellsCount; ++i) {
       cells[i] = Cell.read(handler)
     }
 

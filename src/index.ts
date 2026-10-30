@@ -1,14 +1,20 @@
 import fs from 'node:fs'
-import { BinaryReader } from './utils/BinaryReader.ts'
-import { ActorExDescription } from './zengine/ActorExDescription.ts'
-import { SkeletalAnimation } from './zengine/SkeletalAnimation.ts'
+import { ZBinaryReader } from './utils/ZBinaryReader.ts'
+import { Scene } from './zengine/scn/Scene.ts'
 
-const pathToFile = 'dump\\RESOURCES\\MODELS\\ACTORSEX\\00AST.SKA'
+const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\md_9999.scn`
 const buffer = fs.readFileSync(pathToFile)
-const reader = new BinaryReader(buffer)
-const aed = SkeletalAnimation.read(reader)
+const reader = new ZBinaryReader(buffer)
+const scn = Scene.read(reader)
 
-console.dir(aed, { depth: null })
+console.log(scn)
+
+// const pathToFile = 'dump\\RESOURCES\\MODELS\\ACTORSEX\\00AST.SKA'
+// const buffer = fs.readFileSync(pathToFile)
+// const reader = new BinaryReader(buffer)
+// const aed = SkeletalAnimation.read(reader)
+
+// console.dir(aed, { depth: null })
 
 // const pathToFile = 'E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Models\\ActorsEx\\a000sa00.aed'
 // const buffer = fs.readFileSync(pathToFile)

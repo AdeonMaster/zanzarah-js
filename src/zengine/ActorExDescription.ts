@@ -1,6 +1,6 @@
 // https://github.com/Helco/zzio/blob/master/zzio/ActorExDescription.cs
-import type { ZBinaryReader } from "../utils/ZBinaryReader.ts";
-import type { ZBinaryWriter } from "../utils/ZBinaryWriter.ts";
+import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class ActorPartDescription {
   model: string
@@ -8,7 +8,7 @@ export class ActorPartDescription {
   animations: [number, string][]
 
   constructor() {
-    this.model = ""
+    this.model = ''
     this.animationPoolID = -1
     this.animations = []
   }
@@ -30,12 +30,15 @@ export class ActorExDescription {
   }
 
   write(handler: ZBinaryWriter) {
-    throw new Error("ActorExDescription.write: Not implemented yet")
+    throw new Error('ActorExDescription.write: Not implemented yet')
   }
 
   static read(handler: ZBinaryReader) {
     const mainSectionName = handler.readZString()
-    if (mainSectionName != "[ActorExDescriptionFile]") throw new Error("ActorExDescription.read: Not an actorex description file")
+    if (mainSectionName !== '[ActorExDescriptionFile]')
+      throw new Error(
+        'ActorExDescription.read: Not an actorex description file',
+      )
 
     const bodyAnimations: [number, string][] = []
     const wingsAnimations: [number, string][] = []
@@ -43,72 +46,74 @@ export class ActorExDescription {
     const actor = new this()
 
     let stopParsing = false
-    while(!stopParsing) {
+    while (!stopParsing) {
       const sectionName = handler.readZString()
 
-      switch(sectionName) {
-        case "[ModelFilename_Body]": {
+      switch (sectionName) {
+        case '[ModelFilename_Body]': {
           const model = handler.readZString()
 
           actor.body.model = model
           break
         }
-        case "[AnimationPoolID_Body]": {
+        case '[AnimationPoolID_Body]': {
           const animationPoolID = handler.readInt32()
 
           actor.body.animationPoolID = animationPoolID
           break
         }
-        case "[AnimationFilename_Body]": {
+        case '[AnimationFilename_Body]': {
           const name = handler.readZString()
           const type = handler.readInt32()
 
           bodyAnimations.push([type, name])
           break
         }
-        case "[ModelFilename_Wings]": {
+        case '[ModelFilename_Wings]': {
           const model = handler.readZString()
 
           actor.wings.model = model
           break
         }
-        case "[AnimationPoolID_Wings]": {
+        case '[AnimationPoolID_Wings]': {
           const animationPoolID = handler.readInt32()
 
           actor.wings.animationPoolID = animationPoolID
           break
         }
-        case "[AnimationFilename_Wings]": {
+        case '[AnimationFilename_Wings]': {
           const name = handler.readZString()
           const type = handler.readInt32()
 
           wingsAnimations.push([type, name])
           break
         }
-        case "[AttachWingsToBone]": {
+        case '[AttachWingsToBone]': {
           const attachWingsToBone = handler.readInt32()
 
-          actor.attachWingsToBone  = attachWingsToBone
+          actor.attachWingsToBone = attachWingsToBone
           break
         }
-        case "[HeadBoneID]": {
+        case '[HeadBoneID]': {
           const headBoneID = handler.readInt32()
 
-          actor.headBoneID  = headBoneID
+          actor.headBoneID = headBoneID
           break
         }
-        case "[EffectBoneID]": {
+        case '[EffectBoneID]': {
           const effectBoneID = handler.readInt32()
 
-          actor.effectBoneID  = effectBoneID
+          actor.effectBoneID = effectBoneID
           break
         }
-        case "[EOS]": {
+        case '[EOS]': {
           stopParsing = true
           break
         }
         default:
-          throw new Error(`ActorExDescription.read: Invalid actorex description section "${sectionName}"`);
+          throw new Error(
+            `ActorExDescription.read: Invalid actorex description section "${sectionName}"`,
+          )
       }
     }
 

@@ -1,5 +1,5 @@
-import type { BinaryReader } from "../utils/BinaryReader.ts";
-import type { BinaryWriter } from "../utils/BinaryWriter.ts";
+import type { BinaryReader } from '../utils/BinaryReader.ts'
+import type { BinaryWriter } from '../utils/BinaryWriter.ts'
 
 export class InventoryCard {
   cardId: number
@@ -8,7 +8,13 @@ export class InventoryCard {
   amount: number
   isInUse: boolean
 
-  constructor(cardId: number, atIndex: number, dbId: number, amount: number, isInUse: boolean) {
+  constructor(
+    cardId: number,
+    atIndex: number,
+    dbId: number,
+    amount: number,
+    isInUse: boolean,
+  ) {
     this.cardId = cardId
     this.atIndex = atIndex
     this.dbId = dbId

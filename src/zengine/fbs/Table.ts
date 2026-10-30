@@ -1,6 +1,6 @@
-import type { BinaryReader } from "../../utils/BinaryReader.ts"
-import type { BinaryWriter } from "../../utils/BinaryWriter.ts"
-import { Row } from "./Row.ts"
+import type { BinaryReader } from '../../utils/BinaryReader.ts'
+import type { BinaryWriter } from '../../utils/BinaryWriter.ts'
+import { Row } from './Row.ts'
 
 export class Table {
   rows: Row[]
@@ -11,7 +11,7 @@ export class Table {
 
   write(handler: BinaryWriter) {
     handler.writeUInt32(this.rows.length)
-    for(let i = 0; i < this.rows.length; ++i) {
+    for (let i = 0; i < this.rows.length; ++i) {
       this.rows[i].write(handler)
     }
   }
@@ -19,7 +19,7 @@ export class Table {
   static read(handler: BinaryReader) {
     const rowCount = handler.readUInt32()
     const rows = new Array(rowCount)
-    for(let i = 0; i < rowCount; ++i) {
+    for (let i = 0; i < rowCount; ++i) {
       rows[i] = Row.read(handler)
     }
 

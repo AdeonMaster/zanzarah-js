@@ -1,5 +1,5 @@
-import type { ZBinaryWriter } from "../../utils/ZBinaryWriter.ts"
-import type { ZBinaryReader } from "../../utils/ZBinaryReader.ts"
+import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class IndexTable {
   numbers: number[]
@@ -12,7 +12,7 @@ export class IndexTable {
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.names.length)
-    for(let i = 0; i < this.names.length; ++i) {
+    for (let i = 0; i < this.names.length; ++i) {
       handler.writeUInt32(this.numbers[i])
       handler.writeZString(this.names[i])
     }
@@ -23,7 +23,7 @@ export class IndexTable {
     const numbers = new Array(columnsCount)
     const names = new Array(columnsCount)
 
-    for(let i = 0; i < columnsCount; ++i) {
+    for (let i = 0; i < columnsCount; ++i) {
       const number = handler.readUInt32()
       const name = handler.readZString()
 

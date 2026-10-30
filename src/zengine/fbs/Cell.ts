@@ -1,5 +1,5 @@
-import type { ZBinaryReader } from "../../utils/ZBinaryReader.ts";
-import type { ZBinaryWriter } from "../../utils/ZBinaryWriter.ts";
+import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class Cell {
   type: number
@@ -15,7 +15,7 @@ export class Cell {
   write(handler: ZBinaryWriter) {
     handler.writeInt32(this.type)
     handler.writeInt32(this.columnIndex)
-    switch(this.type) {
+    switch (this.type) {
       case 0:
         handler.writeZString(this.value)
         break
@@ -46,32 +46,37 @@ export class Cell {
     const columnIndex = handler.readInt32()
     let value = null
 
-    switch(type) {
-      case 0: {//string
+    switch (type) {
+      case 0: {
+        //string
         value = handler.readZString()
         break
       }
-      case 1: {//integer
-        const size = handler.readUInt32()
+      case 1: {
+        //integer
+        const _size = handler.readUInt32()
         value = handler.readInt32()
         break
       }
       // case 2: {//unknown
       //   break
       // }
-      case 3: {//fkey
-        const size = handler.readUInt32()
+      case 3: {
+        //fkey
+        const _size = handler.readUInt32()
         const uid = handler.readUInt32()
         const type = handler.readUInt32()
         value = [uid, type]
         break
       }
-      case 4: {//byte
-        const size = handler.readUInt32()
+      case 4: {
+        //byte
+        const _size = handler.readUInt32()
         value = handler.readBytes(1)[0]
         break
       }
-      case 5: {//buffer
+      case 5: {
+        //buffer
         const size = handler.readUInt32()
         value = handler.readBytes(size)
         break

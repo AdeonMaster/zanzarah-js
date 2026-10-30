@@ -7,6 +7,20 @@ export class BinaryWriter {
     this.length = 0
   }
 
+  writeUInt8(v: number) {
+    const b = Buffer.allocUnsafe(1)
+    b.writeUInt8(v >>> 0)
+    this.chunks.push(b)
+    this.length += 1
+  }
+
+  writeInt8(v: number) {
+    const b = Buffer.allocUnsafe(1)
+    b.writeUInt8(v | 0)
+    this.chunks.push(b)
+    this.length += 1
+  }
+
   writeUInt32(v: number) {
     const b = Buffer.allocUnsafe(4)
     b.writeUInt32LE(v >>> 0)
@@ -36,6 +50,13 @@ export class BinaryWriter {
   writeBool(bool: boolean) {
     this.chunks.push(Buffer.from([Number(bool)]))
     this.length += 1
+  }
+
+  writeFloat(v: number) {
+    const b = Buffer.allocUnsafe(4)
+    b.writeFloatLE(v)
+    this.chunks.push(b)
+    this.length += 4
   }
 
   toBuffer() {

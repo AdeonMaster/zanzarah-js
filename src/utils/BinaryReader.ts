@@ -15,6 +15,18 @@ export class BinaryReader {
     return this.offset
   }
 
+  readUInt8() {
+    const v = this.buffer.readUInt8(this.offset)
+    this.offset += 1
+    return v
+  }
+
+  readInt8() {
+    const v = this.buffer.readInt8(this.offset)
+    this.offset += 1
+    return v
+  }
+
   readUInt32() {
     const v = this.buffer.readUInt32LE(this.offset)
     this.offset += 4
@@ -28,7 +40,11 @@ export class BinaryReader {
   }
 
   readBytes(count: number) {
-    if (!Number.isInteger(count) || count < 0 || this.offset + count > this.buffer.length) {
+    if (
+      !Number.isInteger(count) ||
+      count < 0 ||
+      this.offset + count > this.buffer.length
+    ) {
       throw new RangeError('Unexpected end of buffer')
     }
 
