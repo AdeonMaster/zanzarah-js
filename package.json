@@ -6,10 +6,15 @@
   "license": "ISC",
   "author": "Adeon",
   "type": "module",
-  "workspaces": ["packages/cli", "packages/editor", "packages/engine"],
+  "workspaces": [
+    "packages/cli",
+    "packages/editor",
+    "packages/engine"
+  ],
   "scripts": {
     "dev:engine": "npm run dev --workspace @zanzarah.js/engine",
     "dev:cli": "npm run dev --workspace @zanzarah.js/cli",
+    "dev:editor": "npm run dev --workspace @zanzarah.js/editor",
     "lint:fix": "npm run lint:fix --workspaces --if-present"
   }
 }
