@@ -1,19 +1,15 @@
 {
-  "name": "zanzarah",
-  "version": "1.0.0",
+  "name": "zanzarah.js",
+  "version": "0.0.1",
+  "private": true,
   "description": "",
   "license": "ISC",
-  "author": "",
+  "author": "Adeon",
   "type": "module",
-  "main": "index.js",
+  "workspaces": ["packages/cli", "packages/editor", "packages/engine"],
   "scripts": {
-    "dev": "npx tsx src/index.ts",
-    "lint:fix": "npx tsc --noEmit & npx @biomejs/biome check --write"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.6.4",
-    "@types/node": "^26.6.6",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "dev:engine": "npm run dev --workspace @zanzarah.js/engine",
+    "dev:cli": "npm run dev --workspace @zanzarah.js/cli",
+    "lint:fix": "npm run lint:fix --workspaces --if-present"
   }
 }

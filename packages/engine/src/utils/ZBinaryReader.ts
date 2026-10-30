@@ -1,4 +1,4 @@
-import { Vector3 } from '../zengine/math/Vector3.ts'
+import { Vector3 } from '../structures/math/Vector3.ts'
 import { BinaryReader } from './BinaryReader.ts'
 
 export class ZBinaryReader extends BinaryReader {

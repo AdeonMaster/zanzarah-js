@@ -1,4 +1,4 @@
-import type { Vector3 } from '../zengine/math/Vector3.ts'
+import type { Vector3 } from '../structures/math/Vector3.ts'
 import { BinaryWriter } from './BinaryWriter.ts'
 
 export class ZBinaryWriter extends BinaryWriter {
