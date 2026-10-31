@@ -83,7 +83,7 @@ const loadScene = async (
     scene.add(sprite)
   })
 
-  scn.effectsV2.forEach((entity) => {
+  scn.effects.forEach((entity) => {
     const gizmoIcon = loadedTextures.get('gizmo:effect')
     const spriteMaterial = new THREE.SpriteMaterial({
       map: gizmoIcon,
