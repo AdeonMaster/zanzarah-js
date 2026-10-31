@@ -1,6 +1,8 @@
 export { BSP } from './structures/bsp/BSP.ts'
 export { PAKArchive, type PAKArchiveEntry } from './structures/PAKArchive.ts'
 export { Savegame } from './structures/Savegame.ts'
+export { LightType } from './structures/scn/Light.ts'
+export { Scene } from './structures/scn/Scene.ts'
 export { BinaryReader } from './utils/BinaryReader.ts'
 export { BinaryWriter } from './utils/BinaryWriter.ts'
 export { ZBinaryReader } from './utils/ZBinaryReader.ts'

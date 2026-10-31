@@ -11,7 +11,7 @@ import { Misc } from './Misc.ts'
 import { Model } from './Model.ts'
 import { Sample2D } from './Sample2D.ts'
 import { Sample3D } from './Sample3D.ts'
-import { SceneEffectV2 } from './SceneEffectV2.ts'
+import { SceneEffect, SceneEffectReadVersion } from './SceneEffect.ts'
 import { SceneItem } from './SceneItem.ts'
 import { TextureProperty } from './TextureProperty.ts'
 import { Trigger } from './Trigger.ts'
@@ -20,6 +20,10 @@ import { WaypointSystem } from './WaypointSystem.ts'
 
 type ReadableClass<T> = {
   read(handler: ZBinaryReader): T
+}
+
+type WriteableClass<T> = {
+  write(handler: ZBinaryWriter): T
 }
 
 const readArray = <T>(
@@ -35,6 +39,13 @@ const readArray = <T>(
   return array
 }
 
+const writeArray = <T>(handler: ZBinaryWriter, items: WriteableClass<T>[]) => {
+  handler.writeUInt32(items.length)
+  for (let i = 0; i < items.length; ++i) {
+    items[i].write(handler)
+  }
+}
+
 export class Scene {
   version: Version
   misc: Misc
@@ -48,8 +59,7 @@ export class Scene {
   backdropFile: string
   ambientSound: number
   music: number
-  effectsV1: any[]
-  effectsV2: SceneEffectV2[]
+  effects: SceneEffect[]
   sceneItems: SceneItem[]
   vertexModifiers: VertexModifier[]
   behaviors: Behavior[]
@@ -71,8 +81,7 @@ export class Scene {
     this.backdropFile = ''
     this.ambientSound = 0
     this.music = 0
-    this.effectsV1 = []
-    this.effectsV2 = []
+    this.effects = []
     this.sceneItems = []
     this.vertexModifiers = []
     this.behaviors = []
@@ -83,7 +92,62 @@ export class Scene {
   }
 
   write(handler: ZBinaryWriter) {
-    throw new Error('Scene.write: Not implemented yet')
+    handler.writeZString('[Scenefile]')
+    handler.writeZString('[Version]')
+    this.version.write(handler)
+    handler.writeZString('[Misc]')
+    this.misc.write(handler)
+    handler.writeZString('[Lights]')
+    writeArray(handler, this.lights)
+    handler.writeZString('[FOModels_v4]')
+    writeArray(handler, this.foModels)
+    handler.writeZString('[Models_v3]')
+    writeArray(handler, this.models)
+    handler.writeZString('[DynamicModels]')
+    writeArray(handler, this.dynModels)
+    handler.writeZString('[Triggers]')
+    writeArray(handler, this.triggers)
+    handler.writeZString('[3DSamples_v2]')
+    writeArray(handler, this.samples3D)
+    handler.writeZString('[2DSamples_v2]')
+    writeArray(handler, this.samples2D)
+    handler.writeZString('[AmbientSound]')
+    handler.writeUInt32(this.ambientSound)
+    handler.writeZString('[Music]')
+    handler.writeUInt32(this.music)
+    handler.writeZString('[Effects]')
+    writeArray(
+      handler,
+      this.effects.filter(
+        (effect) => effect.readVersion === SceneEffectReadVersion.V1,
+      ),
+    )
+    handler.writeZString('[Effects_v2]')
+    writeArray(
+      handler,
+      this.effects.filter(
+        (effect) => effect.readVersion === SceneEffectReadVersion.V2,
+      ),
+    )
+    handler.writeZString('[Scene]')
+    writeArray(handler, this.sceneItems)
+    handler.writeZString('[VertexModifiers]')
+    writeArray(handler, this.vertexModifiers)
+    handler.writeZString('[Behaviours]')
+    writeArray(handler, this.behaviors)
+    handler.writeZString('[Dataset]')
+    this.dataset.write(handler)
+    handler.writeZString('[SceneOrigin]')
+    handler.writeVector3(this.sceneOrigin)
+    handler.writeZString('[TextureProperties]')
+    writeArray(handler, this.textureProperties)
+    handler.writeZString('[WaypointSystem]')
+    this.waypointSystem.write(handler)
+    if (this.backdropFile.length > 0) {
+      handler.writeZString('[Backdrop]')
+      handler.writeZString(this.backdropFile)
+    }
+    handler.writeZString('[EOS]')
   }
 
   static read(handler: ZBinaryReader) {
@@ -133,9 +197,24 @@ export class Scene {
         case '[Music]':
           instance.music = handler.readUInt32()
           break
-        case '[Effects_v2]':
-          instance.effectsV2 = readArray(handler, SceneEffectV2)
+        case '[Effects_v2]': {
+          const totalElements = handler.readUInt32()
+          const array = new Array<SceneEffect>(totalElements)
+          for (let i = 0; i < totalElements; ++i) {
+            array[i] = SceneEffect.read(handler, SceneEffectReadVersion.V2)
+          }
+          instance.effects = [...instance.effects, ...array]
           break
+        }
+        case '[Effects]': {
+          const totalElements = handler.readUInt32()
+          const array = new Array<SceneEffect>(totalElements)
+          for (let i = 0; i < totalElements; ++i) {
+            array[i] = SceneEffect.read(handler, SceneEffectReadVersion.V1)
+          }
+          instance.effects = [...instance.effects, ...array]
+          break
+        }
         case '[Scene]':
           instance.sceneItems = readArray(handler, SceneItem)
           break

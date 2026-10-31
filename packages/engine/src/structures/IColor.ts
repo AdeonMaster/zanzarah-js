@@ -14,6 +14,10 @@ export class IColor {
     this.a = 255
   }
 
+  raw() {
+    return (this.r << 0) | (this.g << 8) | (this.b << 16) | (this.a << 24)
+  }
+
   write(handler: ZBinaryWriter) {
     handler.writeUInt8(this.r)
     handler.writeUInt8(this.g)

@@ -12,9 +12,14 @@
     "dev": "tsx src/index.ts",
     "lint:fix": "tsc --noEmit && biome check --write"
   },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
     "@types/node": "^26.6.6",
+    "@types/three": "^0.187.0",
+    "sass-embedded": "^1.107.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }

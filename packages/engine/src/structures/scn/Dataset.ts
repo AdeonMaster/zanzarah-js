@@ -36,7 +36,21 @@ export class Dataset {
     this.s2 = ''
   }
 
-  write(handler: ZBinaryWriter) {}
+  write(handler: ZBinaryWriter) {
+    handler.writeUInt32(0x24)
+    handler.writeUInt32(this.sceneId)
+    handler.writeInt32(this.sceneType)
+    handler.writeUInt32(this.nameUID)
+    handler.writeUInt16(this.unk1)
+    handler.writeUInt16(0) // padding
+    handler.writeUInt32(this.isInterior ? 1 : 0)
+    handler.writeUInt8(this.canChangeDeck ? 1 : 0)
+    handler.writeBytes(Buffer.from([0, 0, 0]))
+    handler.writeUInt32(this.isHotScene ? 1 : 0)
+    handler.writeUInt32(this.unk6 ? 1 : 0)
+    handler.writeZString(this.s1)
+    handler.writeZString(this.s2)
+  }
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
