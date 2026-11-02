@@ -5,33 +5,18 @@ import { IColor } from '../IColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class Misc {
-  worldFile: string
-  worldPath: string
-  texturePath: string
-  ambientLight: FColor
-  v1: Vector3
-  v2: Vector3
-  clearColor: IColor
-  fogType: number
-  fogColor: IColor
-  fogDistance: number
-  fogDensity: number
-  farClip: number
-
-  constructor() {
-    this.worldFile = ''
-    this.worldPath = ''
-    this.texturePath = ''
-    this.ambientLight = new FColor()
-    this.v1 = new Vector3()
-    this.v2 = new Vector3()
-    this.clearColor = new IColor()
-    this.fogType = 0
-    this.fogColor = new IColor()
-    this.fogDistance = 0.0
-    this.fogDensity = 0.0
-    this.farClip = 0.0
-  }
+  worldFile: string = ''
+  worldPath: string = ''
+  texturePath: string = ''
+  ambientLight: FColor = new FColor()
+  v1: Vector3 = new Vector3()
+  v2: Vector3 = new Vector3()
+  clearColor: IColor = new IColor()
+  fogType: number = 0
+  fogColor: IColor = new IColor()
+  fogDistance: number = 0.0
+  fogDensity: number = 0.0
+  farClip: number = 0.0
 
   write(handler: ZBinaryWriter) {
     handler.writeZString(this.worldFile)
@@ -52,7 +37,6 @@ export class Misc {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.worldFile = handler.readZString()
     instance.worldPath = handler.readZString()
     instance.texturePath = handler.readZString()

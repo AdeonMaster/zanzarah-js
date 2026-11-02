@@ -12,7 +12,7 @@ export const GameStateModType = {
 }
 
 export class GSModDisableAttackTrigger {
-  triggerId: number
+  triggerId: number = 0
 
   constructor(triggerId: number) {
     this.triggerId = triggerId
@@ -28,7 +28,7 @@ export class GSModDisableAttackTrigger {
 }
 
 export class GSModRemoveItem {
-  modelId: number
+  modelId: number = 0
 
   write(handle: BinaryWriter) {
     handle.writeUInt32(this.modelId)
@@ -44,8 +44,8 @@ export class GSModRemoveItem {
 }
 
 export class GSModChangeNPCState {
-  triggerId: number
-  uid: number
+  triggerId: number = 0
+  uid: number = 0
 
   constructor(triggerId: number, uid: number) {
     this.triggerId = triggerId
@@ -66,7 +66,7 @@ export class GSModChangeNPCState {
 }
 
 export class GSModDisableTrigger {
-  triggerId: number
+  triggerId: number = 0
 
   constructor(triggerId: number) {
     this.triggerId = triggerId
@@ -82,7 +82,7 @@ export class GSModDisableTrigger {
 }
 
 export class GSModRemoveModel {
-  modelId: number
+  modelId: number = 0
 
   constructor(modelId: number) {
     this.modelId = modelId
@@ -138,8 +138,8 @@ export class GSModSetTrigger {
 }
 
 export class GSModSetNPCModifier {
-  triggerId: number
-  value: number
+  triggerId: number = 0
+  value: number = 0
 
   constructor(triggerId: number, value: number) {
     this.triggerId = triggerId

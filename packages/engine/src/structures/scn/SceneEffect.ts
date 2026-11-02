@@ -92,14 +92,12 @@ export class SceneEffect {
 
   static read(handler: ZBinaryReader, readVersion: SceneEffectReadVersion) {
     const instance = new this(readVersion)
-
     instance.idx = handler.readUInt32()
     instance.type = handler.readInt32()
     if (readVersion === SceneEffectReadVersion.V2) {
       instance.order = handler.readInt32()
       handler.seek(handler.pos() + 16)
     }
-
     switch (instance.type) {
       case SceneEffectType.Leaves:
       case SceneEffectType.Unused5:

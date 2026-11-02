@@ -10,31 +10,17 @@ export enum SceneType {
 }
 
 export class Dataset {
-  sceneId: number
-  sceneType: number
-  nameUID: number
-  unk1: number
-  isInterior: boolean
-  canChangeDeck: boolean
-  unk4: number
-  isHotScene: boolean
-  unk6: boolean
-  s1: string
-  s2: string
-
-  constructor() {
-    this.sceneId = 0
-    this.sceneType = 0
-    this.nameUID = 0
-    this.unk1 = 0
-    this.isInterior = false
-    this.canChangeDeck = false
-    this.unk4 = 0
-    this.isHotScene = false
-    this.unk6 = false
-    this.s1 = ''
-    this.s2 = ''
-  }
+  sceneId: number = 0
+  sceneType: number = 0
+  nameUID: number = 0
+  unk1: number = 0
+  isInterior: boolean = false
+  canChangeDeck: boolean = false
+  unk4: number = 0
+  isHotScene: boolean = false
+  unk6: boolean = false
+  s1: string = ''
+  s2: string = ''
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(0x24)

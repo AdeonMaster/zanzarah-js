@@ -4,23 +4,13 @@ import { IColor } from '../IColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class VertexModifier {
-  idx: number
-  type: number
-  v: Vector3
-  color: IColor
-  vv: Vector3
-  ii: number
-  c: number
-
-  constructor() {
-    this.idx = 0
-    this.type = 0
-    this.v = new Vector3()
-    this.color = new IColor()
-    this.vv = new Vector3()
-    this.ii = 0
-    this.c = 0
-  }
+  idx: number = 0
+  type: number = 0
+  v: Vector3 = new Vector3()
+  color: IColor = new IColor()
+  vv: Vector3 = new Vector3()
+  ii: number = 0
+  c: number = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)
@@ -34,7 +24,6 @@ export class VertexModifier {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.idx = handler.readUInt32()
     instance.type = handler.readUInt32()
     instance.v = handler.readVector3()

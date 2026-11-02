@@ -1,3 +1,4 @@
+import type { Quaternion } from '../structures/math/Quaternion.ts'
 import type { Vector3 } from '../structures/math/Vector3.ts'
 import { BinaryWriter } from './BinaryWriter.ts'
 
@@ -11,5 +12,12 @@ export class ZBinaryWriter extends BinaryWriter {
     this.writeFloat(v.x)
     this.writeFloat(v.y)
     this.writeFloat(v.z)
+  }
+
+  writeQuaternion(v: Quaternion) {
+    this.writeFloat(v.x)
+    this.writeFloat(v.y)
+    this.writeFloat(v.z)
+    this.writeFloat(v.w)
   }
 }

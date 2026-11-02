@@ -3,17 +3,10 @@ import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 import { IColor } from './IColor.ts'
 
 export class FColor {
-  r: number
-  g: number
-  b: number
-  a: number
-
-  constructor() {
-    this.r = 0.0
-    this.g = 0.0
-    this.b = 0.0
-    this.a = 0.0
-  }
+  r: number = 0.0
+  g: number = 0.0
+  b: number = 0.0
+  a: number = 0.0
 
   toIColor() {
     const instance = new IColor()
@@ -34,7 +27,6 @@ export class FColor {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.r = handler.readFloat()
     instance.g = handler.readFloat()
     instance.b = handler.readFloat()

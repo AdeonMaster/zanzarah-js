@@ -2,15 +2,9 @@ import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class SceneItem {
-  name: string
-  index: number
-  type: number
-
-  constructor() {
-    this.name = ''
-    this.index = 0
-    this.type = 0
-  }
+  name: string = ''
+  index: number = 0
+  type: number = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeZString(this.name)
@@ -20,7 +14,6 @@ export class SceneItem {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.name = handler.readZString()
     instance.index = handler.readUInt32()
     instance.type = handler.readUInt32()

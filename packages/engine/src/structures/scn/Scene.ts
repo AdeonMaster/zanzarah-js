@@ -47,49 +47,26 @@ const writeArray = <T>(handler: ZBinaryWriter, items: WriteableClass<T>[]) => {
 }
 
 export class Scene {
-  version: Version
-  misc: Misc
-  lights: Light[]
-  foModels: FOModel[]
-  models: Model[]
-  dynModels: DynModel[]
-  triggers: Trigger[]
-  samples3D: Sample3D[]
-  samples2D: Sample2D[]
-  backdropFile: string
-  ambientSound: number
-  music: number
-  effects: SceneEffect[]
-  sceneItems: SceneItem[]
-  vertexModifiers: VertexModifier[]
-  behaviors: Behavior[]
-  dataset: Dataset
-  sceneOrigin: Vector3
-  textureProperties: TextureProperty[]
-  waypointSystem: WaypointSystem
-
-  constructor() {
-    this.version = new Version()
-    this.misc = new Misc()
-    this.lights = []
-    this.foModels = []
-    this.models = []
-    this.dynModels = []
-    this.triggers = []
-    this.samples3D = []
-    this.samples2D = []
-    this.backdropFile = ''
-    this.ambientSound = 0
-    this.music = 0
-    this.effects = []
-    this.sceneItems = []
-    this.vertexModifiers = []
-    this.behaviors = []
-    this.dataset = new Dataset()
-    this.sceneOrigin = new Vector3()
-    this.textureProperties = []
-    this.waypointSystem = new WaypointSystem()
-  }
+  version: Version = new Version()
+  misc: Misc = new Misc()
+  lights: Light[] = []
+  foModels: FOModel[] = []
+  models: Model[] = []
+  dynModels: DynModel[] = []
+  triggers: Trigger[] = []
+  samples3D: Sample3D[] = []
+  samples2D: Sample2D[] = []
+  backdropFile: string = ''
+  ambientSound: number = 0
+  music: number = 0
+  effects: SceneEffect[] = []
+  sceneItems: SceneItem[] = []
+  vertexModifiers: VertexModifier[] = []
+  behaviors: Behavior[] = []
+  dataset: Dataset = new Dataset()
+  sceneOrigin: Vector3 = new Vector3()
+  textureProperties: TextureProperty[] = []
+  waypointSystem: WaypointSystem = new WaypointSystem()
 
   write(handler: ZBinaryWriter) {
     handler.writeZString('[Scenefile]')

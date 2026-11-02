@@ -3,35 +3,19 @@ import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class Waypoint {
-  id: number
-  group: number
-  pos: Vector3
-  walkableIds: number[]
-  jumpableIds: number[]
-  visibleIds: number[]
-
-  constructor() {
-    this.id = 0
-    this.group = 0
-    this.pos = new Vector3()
-    this.walkableIds = []
-    this.jumpableIds = []
-    this.visibleIds = []
-  }
+  id: number = 0
+  group: number = 0
+  pos: Vector3 = new Vector3()
+  walkableIds: number[] = []
+  jumpableIds: number[] = []
+  visibleIds: number[] = []
 }
 
 export class WaypointSystem {
-  version: number
-  data: Buffer
-  waypoints: Waypoint[]
-  compatibleGroups: Map<number, number[]>
-
-  constructor() {
-    this.version = 0
-    this.data = Buffer.from(Array(0x18).fill(0))
-    this.waypoints = []
-    this.compatibleGroups = new Map<number, number[]>()
-  }
+  version: number = 0
+  data: Buffer = Buffer.from(Array(0x18).fill(0))
+  waypoints: Waypoint[] = []
+  compatibleGroups: Map<number, number[]> = new Map<number, number[]>()
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.version)

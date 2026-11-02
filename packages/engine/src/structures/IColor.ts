@@ -2,17 +2,10 @@ import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class IColor {
-  r: number
-  g: number
-  b: number
-  a: number
-
-  constructor() {
-    this.r = 255
-    this.g = 255
-    this.b = 255
-    this.a = 255
-  }
+  r: number = 255
+  g: number = 255
+  b: number = 255
+  a: number = 255
 
   raw() {
     return (this.r << 0) | (this.g << 8) | (this.b << 16) | (this.a << 24)

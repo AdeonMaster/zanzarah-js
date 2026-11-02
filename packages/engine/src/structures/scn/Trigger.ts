@@ -11,35 +11,19 @@ export const TriggerColliderType = {
 }
 
 export class Trigger {
-  idx: number
-  requiresLooking: boolean
-  colliderType: number
-  dir: Vector3
-  type: number
-  ii1: number
-  ii2: number
-  ii3: number
-  ii4: number
-  s: string
-  pos: Vector3
-  end: Vector3
-  radius: number
-
-  constructor() {
-    this.idx = 0
-    this.requiresLooking = false
-    this.colliderType = 0
-    this.dir = new Vector3()
-    this.type = 0
-    this.ii1 = 0
-    this.ii2 = 0
-    this.ii3 = 0
-    this.ii4 = 0
-    this.s = ''
-    this.pos = new Vector3()
-    this.end = new Vector3()
-    this.radius = 0.0
-  }
+  idx: number = 0
+  requiresLooking: boolean = false
+  colliderType: number = 0
+  dir: Vector3 = new Vector3()
+  type: number = 0
+  ii1: number = 0
+  ii2: number = 0
+  ii3: number = 0
+  ii4: number = 0
+  s: string = ''
+  pos: Vector3 = new Vector3()
+  end: Vector3 = new Vector3()
+  radius: number = 0.0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)
@@ -65,7 +49,6 @@ export class Trigger {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.idx = handler.readUInt32()
     instance.colliderType = handler.readInt32()
     instance.requiresLooking = handler.readUInt32() !== 0

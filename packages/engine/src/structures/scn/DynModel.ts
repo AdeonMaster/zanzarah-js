@@ -4,61 +4,32 @@ import { IColor } from '../IColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class DynModelData {
-  a1: number
-  a2: number
-  a3: number
-  a4: number
-  a5: number
-  a6: number
-  a7: number
-  someFlag: number
-  someColor: IColor
-  cc: number
-  s1: string
-  s2: string
-
-  constructor() {
-    this.a1 = 0.0
-    this.a2 = 0.0
-    this.a3 = 0.0
-    this.a4 = 0.0
-    this.a5 = 0.0
-    this.a6 = 0.0
-    this.a7 = 0.0
-    this.someFlag = 0
-    this.someColor = new IColor()
-    this.cc = 0
-    this.s1 = ''
-    this.s2 = ''
-  }
+  a1: number = 0.0
+  a2: number = 0.0
+  a3: number = 0.0
+  a4: number = 0.0
+  a5: number = 0.0
+  a6: number = 0.0
+  a7: number = 0.0
+  someFlag: number = 0
+  someColor: IColor = new IColor()
+  cc: number = 0
+  s1: string = ''
+  s2: string = ''
 }
 
 export class DynModel {
-  idx: number
-  c1: number
-  c2: number
-  pos: Vector3
-  rot: Vector3
-  f1: number
-  f2: number
-  v1: Vector3
-  ii1: number
-  ii2: number
-  data: DynModelData[]
-
-  constructor() {
-    this.idx = 0
-    this.c1 = 0
-    this.c2 = 0
-    this.pos = new Vector3()
-    this.rot = new Vector3()
-    this.f1 = 0.0
-    this.f2 = 0.0
-    this.v1 = new Vector3()
-    this.ii1 = 0
-    this.ii2 = 0
-    this.data = []
-  }
+  idx: number = 0
+  c1: number = 0
+  c2: number = 0
+  pos: Vector3 = new Vector3()
+  rot: Vector3 = new Vector3()
+  f1: number = 0.0
+  f2: number = 0.0
+  v1: Vector3 = new Vector3()
+  ii1: number = 0
+  ii2: number = 0
+  data: DynModelData[] = []
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)
@@ -89,7 +60,6 @@ export class DynModel {
 
   static read(handler: ZBinaryReader) {
     const intance = new this()
-
     intance.idx = handler.readUInt32()
     intance.c1 = handler.readUInt32()
     intance.c2 = handler.readUInt32()

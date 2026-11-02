@@ -2,7 +2,7 @@ import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { IColor } from '../IColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
-import { SurfaceProperties } from '../primitives/SurfaceProperties.ts'
+import { SurfaceProperties } from '../SurfaceProperties.ts'
 
 export const FOModelRenderType = {
   EarlySolid: 0,
@@ -22,35 +22,19 @@ export const FOModelRenderType = {
 }
 
 export class FOModel {
-  idx: number
-  filename: string
-  pos: Vector3
-  rot: Vector3
-  fadeOutMin: number
-  fadeOutMax: number
-  surfaceProps: SurfaceProperties
-  color: IColor
-  worldDetailLevel: number
-  unused: number
-  renderType: number
-  useCachedModels: boolean
-  wiggleAmpl: number
-
-  constructor() {
-    this.idx = 0
-    this.filename = ''
-    this.pos = new Vector3()
-    this.rot = new Vector3()
-    this.fadeOutMin = 0.0
-    this.fadeOutMax = 0.0
-    this.surfaceProps = new SurfaceProperties()
-    this.color = new IColor()
-    this.worldDetailLevel = 0
-    this.unused = 0
-    this.renderType = 0
-    this.useCachedModels = false
-    this.wiggleAmpl = 0
-  }
+  idx: number = 0
+  filename: string = ''
+  pos: Vector3 = new Vector3()
+  rot: Vector3 = new Vector3()
+  fadeOutMin: number = 0.0
+  fadeOutMax: number = 0.0
+  surfaceProps: SurfaceProperties = new SurfaceProperties()
+  color: IColor = new IColor()
+  worldDetailLevel: number = 0
+  unused: number = 0
+  renderType: number = 0
+  useCachedModels: boolean = false
+  wiggleAmpl: number = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)
@@ -70,7 +54,6 @@ export class FOModel {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.idx = handler.readUInt32()
     instance.filename = handler.readZString()
     instance.pos = handler.readVector3()

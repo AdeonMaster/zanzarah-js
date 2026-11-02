@@ -1,5 +1,5 @@
-import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
-import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
+import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class SurfaceProperties {
   ambient: number

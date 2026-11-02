@@ -3,29 +3,16 @@ import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class Sample3D {
-  idx: number
-  filename: string
-  pos: Vector3
-  forward: Vector3
-  up: Vector3
-  minDist: number
-  maxDist: number
-  volume: number
-  loopCount: number
-  falloff: number
-
-  constructor() {
-    this.idx = 0
-    this.filename = ''
-    this.pos = new Vector3()
-    this.forward = new Vector3()
-    this.up = new Vector3()
-    this.minDist = 0.0
-    this.maxDist = 0.0
-    this.volume = 0
-    this.loopCount = 0
-    this.falloff = 0
-  }
+  idx: number = 0
+  filename: string = ''
+  pos: Vector3 = new Vector3()
+  forward: Vector3 = new Vector3()
+  up: Vector3 = new Vector3()
+  minDist: number = 0.0
+  maxDist: number = 0.0
+  volume: number = 0
+  loopCount: number = 0
+  falloff: number = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)
@@ -42,7 +29,6 @@ export class Sample3D {
 
   static read(handler: ZBinaryReader) {
     const instance = new this()
-
     instance.idx = handler.readUInt32()
     instance.filename = handler.readZString()
     instance.pos = handler.readVector3()

@@ -3,37 +3,48 @@ import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class ActorPartDescription {
-  model: string
-  animationPoolID: number
-  animations: [number, string][]
+  model: string = ''
+  animationPoolID: number = -1
+  animations: [number, string][] = []
 
-  constructor() {
-    this.model = ''
-    this.animationPoolID = -1
-    this.animations = []
+  write(handler: ZBinaryWriter, partName: string) {
+    handler.writeZString(`[ModelFilename_${partName}]`)
+    handler.writeZString(this.model)
+    handler.writeZString(`[AnimationPoolID_${partName}]`)
+    handler.writeInt32(this.animationPoolID)
+    for (const [type, fileName] of this.animations) {
+      handler.writeZString(`[AnimationFilename_${partName}]`)
+      handler.writeZString(fileName)
+      handler.writeInt32(type)
+    }
   }
 }
 
 export class ActorExDescription {
-  body: ActorPartDescription
-  wings: ActorPartDescription
-  attachWingsToBone: number
-  headBoneID: number
-  effectBoneID: number
-
-  constructor() {
-    this.body = new ActorPartDescription()
-    this.wings = new ActorPartDescription()
-    this.attachWingsToBone = -1
-    this.headBoneID = -1
-    this.effectBoneID = -1
-  }
+  body: ActorPartDescription = new ActorPartDescription()
+  wings: ActorPartDescription = new ActorPartDescription()
+  attachWingsToBone: number = -1
+  headBoneID: number = -1
+  effectBoneID: number = -1
 
   write(handler: ZBinaryWriter) {
-    throw new Error('ActorExDescription.write: Not implemented yet')
+    handler.writeZString("[ActorExDescriptionFile]")
+    this.body.write(handler, "Body")
+    if (this.wings.model.length > 0) {
+      this.wings.write(handler, "Wings")
+    }
+    handler.writeZString("[AttachWingsToBone]")
+    handler.writeInt32(this.attachWingsToBone)
+    handler.writeZString("[HeadBoneID]")
+    handler.writeInt32(this.headBoneID)
+    handler.writeZString("[EffectBoneID]")
+    handler.writeInt32(this.effectBoneID)
+    handler.writeZString("[EOS]")
   }
 
   static read(handler: ZBinaryReader) {
+    const instance = new this()
+
     const mainSectionName = handler.readZString()
     if (mainSectionName !== '[ActorExDescriptionFile]')
       throw new Error(
@@ -43,23 +54,17 @@ export class ActorExDescription {
     const bodyAnimations: [number, string][] = []
     const wingsAnimations: [number, string][] = []
 
-    const actor = new this()
-
     let stopParsing = false
     while (!stopParsing) {
       const sectionName = handler.readZString()
 
       switch (sectionName) {
         case '[ModelFilename_Body]': {
-          const model = handler.readZString()
-
-          actor.body.model = model
+          instance.body.model = handler.readZString()
           break
         }
         case '[AnimationPoolID_Body]': {
-          const animationPoolID = handler.readInt32()
-
-          actor.body.animationPoolID = animationPoolID
+          instance.body.animationPoolID = handler.readInt32()
           break
         }
         case '[AnimationFilename_Body]': {
@@ -70,15 +75,11 @@ export class ActorExDescription {
           break
         }
         case '[ModelFilename_Wings]': {
-          const model = handler.readZString()
-
-          actor.wings.model = model
+          instance.wings.model = handler.readZString()
           break
         }
         case '[AnimationPoolID_Wings]': {
-          const animationPoolID = handler.readInt32()
-
-          actor.wings.animationPoolID = animationPoolID
+          instance.wings.animationPoolID = handler.readInt32()
           break
         }
         case '[AnimationFilename_Wings]': {
@@ -89,21 +90,15 @@ export class ActorExDescription {
           break
         }
         case '[AttachWingsToBone]': {
-          const attachWingsToBone = handler.readInt32()
-
-          actor.attachWingsToBone = attachWingsToBone
+          instance.attachWingsToBone = handler.readInt32()
           break
         }
         case '[HeadBoneID]': {
-          const headBoneID = handler.readInt32()
-
-          actor.headBoneID = headBoneID
+          instance.headBoneID = handler.readInt32()
           break
         }
         case '[EffectBoneID]': {
-          const effectBoneID = handler.readInt32()
-
-          actor.effectBoneID = effectBoneID
+          instance.effectBoneID = handler.readInt32()
           break
         }
         case '[EOS]': {
@@ -117,9 +112,9 @@ export class ActorExDescription {
       }
     }
 
-    actor.body.animations = [...actor.body.animations, ...bodyAnimations]
-    actor.wings.animations = [...actor.wings.animations, ...wingsAnimations]
+    instance.body.animations = [...instance.body.animations, ...bodyAnimations]
+    instance.wings.animations = [...instance.wings.animations, ...wingsAnimations]
 
-    return actor
+    return instance
   }
 }
