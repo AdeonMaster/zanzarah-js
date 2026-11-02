@@ -1,4 +1,4 @@
-export { BSP } from './structures/bsp/BSP.ts'
+export { Section } from './structures/rwbs/Section.ts'
 export { PAKArchive, type PAKArchiveEntry } from './structures/PAKArchive.ts'
 export { Savegame } from './structures/Savegame.ts'
 export { LightType } from './structures/scn/Light.ts'

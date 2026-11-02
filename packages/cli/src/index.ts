@@ -1,11 +1,18 @@
 import fs from 'node:fs'
 import {
   Scene,
-  BSP,
+  Section,
   ZBinaryReader,
   ZBinaryWriter,
 } from '@zanzarah.js/engine'
 import { IColor } from '../../engine/src/structures/IColor.ts'
+
+const pathToFile = '..\\..\\dump\\RESOURCES\\WORLDS\\DUMMY.BSP'
+const buffer = fs.readFileSync(pathToFile)
+const reader = new ZBinaryReader(buffer)
+const bsp = Section.read(reader)
+
+console.log(bsp)
 
 // const pathToSave =
 //   'E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Save\\_0000.dat'
@@ -13,39 +20,29 @@ import { IColor } from '../../engine/src/structures/IColor.ts'
 // const reader = new ZBinaryReader(buffer)
 // const sg = Savegame.read(reader)
 
-// console.log(sg)
 
-// const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sc_2421.scn`
-// const buffer = fs.readFileSync(pathToFile)
-// const reader = new ZBinaryReader(buffer)
-// const scn = Scene.read(reader)
-// console.log(scn)
+// const loadScn = (path: string) => {
+//   const buffer = fs.readFileSync(path)
+//   const reader = new ZBinaryReader(buffer)
+//   const scn = Scene.read(reader)
 
-// const writer = new ZBinaryWriter()
-// scn.write(writer)
+//   return scn
+// }
 
-const loadScn = (path: string) => {
-  const buffer = fs.readFileSync(path)
-  const reader = new ZBinaryReader(buffer)
-  const scn = Scene.read(reader)
+// const saveScn = (scn: Scene, path: string) => {
+//   const writer = new ZBinaryWriter()
+//   scn.write(writer)
+//   const buffer = writer.toBuffer()
+//   fs.writeFileSync(path, buffer)
+// }
 
-  return scn
-}
+// const scn1 = loadScn(`E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sc_2421.scn`)
+// scn1.lights[0].color.r = 1.0
+// scn1.lights[0].color.g = 0.0
+// scn1.lights[0].color.b = 0.0
+// scn1.lights[1].color.r = 1.0
+// scn1.lights[1].color.g = 0.0
+// scn1.lights[1].color.b = 0.0
 
-const saveScn = (scn: Scene, path: string) => {
-  const writer = new ZBinaryWriter()
-  scn.write(writer)
-  const buffer = writer.toBuffer()
-  fs.writeFileSync(path, buffer)
-}
-
-const scn1 = loadScn(`E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sc_2421.scn`)
-scn1.lights[0].color.r = 1.0
-scn1.lights[0].color.g = 0.0
-scn1.lights[0].color.b = 0.0
-scn1.lights[1].color.r = 1.0
-scn1.lights[1].color.g = 0.0
-scn1.lights[1].color.b = 0.0
-
-saveScn(scn1, `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sc_2421.scn`)
-// const scn2 = loadScn('tmp.scn')
+// saveScn(scn1, `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sc_2421.scn`)
+// // const scn2 = loadScn('tmp.scn')
