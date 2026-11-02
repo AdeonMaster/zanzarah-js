@@ -28,14 +28,16 @@ const loadScene = async (
     const gizmoLightIcon = loadedTextures.get('gizmo:light')
 
     if (entity.type === LightType.Directional) {
+      const color = entity.color.toIColor().raw()
+
       const spriteMaterial = new THREE.SpriteMaterial({
         map: gizmoLightIcon,
-        color: 0xffffff,
+        color,
       })
       const sprite = new THREE.Sprite(spriteMaterial)
       sprite.scale.set(1, 1, 1) // Set world-space dimen
 
-      const light = new THREE.DirectionalLight(entity.color.toIColor().raw(), 2)
+      const light = new THREE.DirectionalLight(color, 2)
       light.add(sprite)
 
       light.position.set(

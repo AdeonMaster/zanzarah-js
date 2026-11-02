@@ -46,6 +46,7 @@ export class Dataset {
     handler.writeUInt32(this.isInterior ? 1 : 0)
     handler.writeUInt8(this.canChangeDeck ? 1 : 0)
     handler.writeBytes(Buffer.from([0, 0, 0]))
+    handler.writeUInt32(this.unk4)
     handler.writeUInt32(this.isHotScene ? 1 : 0)
     handler.writeUInt32(this.unk6 ? 1 : 0)
     handler.writeZString(this.s1)

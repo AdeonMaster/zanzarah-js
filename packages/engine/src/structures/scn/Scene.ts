@@ -115,20 +115,30 @@ export class Scene {
     handler.writeUInt32(this.ambientSound)
     handler.writeZString('[Music]')
     handler.writeUInt32(this.music)
-    handler.writeZString('[Effects]')
-    writeArray(
-      handler,
-      this.effects.filter(
-        (effect) => effect.readVersion === SceneEffectReadVersion.V1,
-      ),
+    const effects1 = this.effects.filter(
+      (effect) => effect.readVersion === SceneEffectReadVersion.V1,
     )
-    handler.writeZString('[Effects_v2]')
-    writeArray(
-      handler,
-      this.effects.filter(
-        (effect) => effect.readVersion === SceneEffectReadVersion.V2,
-      ),
+    if (effects1.length > 0) {
+      handler.writeZString('[Effects]')
+      writeArray(
+        handler,
+        this.effects.filter(
+          (effect) => effect.readVersion === SceneEffectReadVersion.V1,
+        ),
+      )
+    }
+    const effects2 = this.effects.filter(
+      (effect) => effect.readVersion === SceneEffectReadVersion.V2,
     )
+    if (effects2.length > 0) {
+      handler.writeZString('[Effects_v2]')
+      writeArray(
+        handler,
+        this.effects.filter(
+          (effect) => effect.readVersion === SceneEffectReadVersion.V2,
+        ),
+      )
+    }
     handler.writeZString('[Scene]')
     writeArray(handler, this.sceneItems)
     handler.writeZString('[VertexModifiers]')
@@ -167,6 +177,9 @@ export class Scene {
         case '[Misc]':
           instance.misc = Misc.read(handler)
           break
+        case '[Backdrop]':
+          instance.backdropFile = handler.readZString()
+          break
         case '[Lights]':
           instance.lights = readArray(handler, Light)
           break
@@ -187,9 +200,6 @@ export class Scene {
           break
         case '[2DSamples_v2]':
           instance.samples2D = readArray(handler, Sample2D)
-          break
-        case '[Backdrop]':
-          instance.backdropFile = handler.readZString()
           break
         case '[AmbientSound]':
           instance.ambientSound = handler.readUInt32()
