@@ -1,18 +1,18 @@
 import fs from 'node:fs'
 import {
+  RWBinaryFile,
   Scene,
-  Section,
   ZBinaryReader,
   ZBinaryWriter,
 } from '@zanzarah.js/engine'
 import { IColor } from '../../engine/src/structures/IColor.ts'
 
-const pathToFile = '..\\..\\dump\\RESOURCES\\WORLDS\\DUMMY.BSP'
+const pathToFile = '..\\..\\dump\\RESOURCES\\WORLDS\\EFFECT.BSP'
 const buffer = fs.readFileSync(pathToFile)
 const reader = new ZBinaryReader(buffer)
-const bsp = Section.read(reader)
+const bsp = RWBinaryFile.read(reader)
 
-console.log(bsp)
+console.dir(bsp, { depth: null })
 
 // const pathToSave =
 //   'E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Save\\_0000.dat'

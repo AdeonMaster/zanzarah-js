@@ -1,10 +1,12 @@
 export class BinaryReader {
   private buffer: Buffer
   private offset: number
+  public length: number
 
   constructor(buffer: Buffer) {
     this.buffer = buffer
     this.offset = 0
+    this.length = buffer.length
   }
 
   seek(offset: number) {

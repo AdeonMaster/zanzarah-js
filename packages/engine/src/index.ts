@@ -1,4 +1,4 @@
-export { Section } from './structures/rwbs/Section.ts'
+export { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
 export { PAKArchive, type PAKArchiveEntry } from './structures/PAKArchive.ts'
 export { Savegame } from './structures/Savegame.ts'
 export { LightType } from './structures/scn/Light.ts'
