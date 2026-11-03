@@ -1,6 +1,8 @@
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
+import type { ListSection } from './ListSection.ts'
 import { SectionId } from './SectionID.ts'
+import { UnknownSection } from './UnknownSection.ts'
 
 const readHead = (handler: ZBinaryReader) => {
   const sectionId = handler.readInt32()
@@ -15,55 +17,41 @@ const readHead = (handler: ZBinaryReader) => {
 }
 
 const createSection = (sectionId: SectionId) => {
-  
+  return new UnknownSection(sectionId)
 }
 
-export class Section {
-  constructor() {}
+export abstract class Section {
+  abstract sectionId: SectionId
+  version: number = 0
+  parent: ListSection | null = null
 
-  write(handler: ZBinaryWriter) {}
+  protected abstract readBody(handler: ZBinaryReader): void
+  protected abstract writeBody(handler: ZBinaryWriter): void
 
-  // static read(handler: ZBinaryReader) {
-  //   const header = readHead(handler)
+  read(handler: ZBinaryReader) {
+    const { sectionId: readSectionId, size: readSize, version: readVersion } = readHead(handler)
 
-  //   console.log(SectionId[header.sectionId], header.size)
+    if (readSectionId != this.sectionId) {
+      throw new Error(`Trying to read a "${readSectionId}" from a "${this.sectionId}"`)
+    }
 
-  //   const readWorld = (handler: ZBinaryReader) => {
-  //     const rootIsWorldSector = handler.readUInt32() > 0
-  //     const origin = handler.readVector3()
-  //     const ambient = handler.readFloat()
-  //     const specular = handler.readFloat()
-  //     const diffuse = handler.readFloat()
-  //     const numTriangles = handler.readUInt32()
-  //     const numVertices = handler.readUInt32()
-  //     const numPlaneSectors = handler.readUInt32()
-  //     const numWorldSectors = handler.readUInt32()
-  //     const colSectorSize = handler.readUInt32()
-  //     const format = handler.readUInt32()
+    this.version = readVersion
 
-  //     console.log({
-  //       rootIsWorldSector,
-  //       origin,
-  //       ambient,
-  //       specular,
-  //       diffuse,
-  //       numTriangles,
-  //       numVertices,
-  //       numPlaneSectors,
-  //       numWorldSectors,
-  //       colSectorSize,
-  //       format
-  //     })
-  //   }
+    const expectedEndPosition = handler.pos() + readSize
+    this.readBody(handler)
+    if (handler.pos() > expectedEndPosition) throw new Error("Section.read: Did not read section correctly")
+    handler.seek(expectedEndPosition)
+  }
 
-  //   switch(header.sectionId) {
-  //     case SectionId.World:
-  //       readWorld(handler)
-  //       break
-  //   }
+  static read(handler: ZBinaryReader, parent = null) {
+    const oldPosition = handler.pos()
+    const { sectionId, size } = readHead(handler)
+    handler.seek(oldPosition)
 
-  //   console.log(handler.pos())
+    const section = createSection(sectionId)
+    section.parent = parent
+    section.read(handler)
 
-  //   return null
-  // }
+    return section
+  }
 }

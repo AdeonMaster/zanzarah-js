@@ -3,13 +3,8 @@ import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Cell } from './Cell.ts'
 
 export class Row {
-  uid: number
-  cells: Cell[]
-
-  constructor() {
-    this.uid = 0
-    this.cells = []
-  }
+  uid: number = 0
+  cells: Cell[] = []
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.uid)
@@ -20,16 +15,13 @@ export class Row {
   }
 
   static read(handler: ZBinaryReader) {
-    const uid = handler.readUInt32()
-    const cellsCount = handler.readUInt32()
-    const cells = new Array(cellsCount)
-    for (let i = 0; i < cellsCount; ++i) {
-      cells[i] = Cell.read(handler)
-    }
-
     const instance = new this()
-    instance.uid = uid
-    instance.cells = cells
+    instance.uid = handler.readUInt32()
+    const cellsCount = handler.readUInt32()
+    instance.cells = new Array(cellsCount)
+    for (let i = 0; i < cellsCount; ++i) {
+      instance.cells[i] = Cell.read(handler)
+    }
 
     return instance
   }

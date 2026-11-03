@@ -7,6 +7,10 @@ export { BinaryReader } from './utils/BinaryReader.ts'
 export { BinaryWriter } from './utils/BinaryWriter.ts'
 export { ZBinaryReader } from './utils/ZBinaryReader.ts'
 export { ZBinaryWriter } from './utils/ZBinaryWriter.ts'
+export { IndexTable } from './structures/fbs/IndexTable.ts'
+export { Table } from './structures/fbs/Table.ts'
+export { Config } from './structures/Config.ts'
+export { Section as RWSection } from './structures/_rwbs/Section.ts'
 
 // const pathToFile = `dump\\RESOURCES\\WORLDS\\DUMMY.BSP`
 // const buffer = fs.readFileSync(pathToFile)

@@ -2,13 +2,8 @@ import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class IndexTable {
-  numbers: number[]
-  names: string[]
-
-  constructor() {
-    this.numbers = []
-    this.names = []
-  }
+  numbers: number[] = []
+  names: string[] = []
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.names.length)
@@ -19,21 +14,15 @@ export class IndexTable {
   }
 
   static read(handler: ZBinaryReader) {
-    const columnsCount = handler.readUInt32()
-    const numbers = new Array(columnsCount)
-    const names = new Array(columnsCount)
-
-    for (let i = 0; i < columnsCount; ++i) {
-      const number = handler.readUInt32()
-      const name = handler.readZString()
-
-      numbers[i] = number
-      names[i] = name
-    }
-
     const instance = new this()
-    instance.names = names
-    instance.numbers = numbers
+
+    const columnsCount = handler.readUInt32()
+    instance.numbers = new Array(columnsCount)
+    instance.names = new Array(columnsCount)
+    for (let i = 0; i < columnsCount; ++i) {
+      instance.numbers[i] = handler.readUInt32()
+      instance.names[i] = handler.readZString()
+    }
 
     return instance
   }

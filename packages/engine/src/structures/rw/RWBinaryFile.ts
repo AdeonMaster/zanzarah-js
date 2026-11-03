@@ -1,6 +1,9 @@
 import { ZBinaryReader } from "../../utils/ZBinaryReader.ts"
 import { SectionId } from "./SectionID.ts"
 import { IColor } from "../IColor.ts"
+import { GeometryFormat } from "./GeometryFormat.ts"
+import { Normal } from "../Normal.ts"
+import { VertexTriangle } from "../VertexTriangle.ts"
 
 // Only recurse into types whose payload is a sequence of chunks.
 const CONTAINER_TYPES = new Set<number>([
@@ -58,7 +61,7 @@ const parseChunkRange = (handler: ZBinaryReader, containerTypes: Set<number>, pa
 
     if (size > handler.length - handler.pos()) {
       throw new Error(
-        `Section 0x${sectionId.toString(16)} at offset ${sectionOffset} declares ${size} data bytes, but only ${handler.length - handler.pos()} remain`,
+        `Section ${SectionId[sectionId]} at offset ${sectionOffset} declares ${size} data bytes, but only ${handler.length - handler.pos()} remain`,
       )
     }
 
@@ -72,6 +75,10 @@ const parseChunkRange = (handler: ZBinaryReader, containerTypes: Set<number>, pa
     instance.version = version
     instance.parent = parent
     instance.children = []
+
+    if (containerTypes.has(sectionId)) {
+      instance.children = parseChunkRange(reader, containerTypes, instance, depth + 1)
+    }
 
     if (sectionId == SectionId.Struct) {
       switch(parent?.sectionId) {
@@ -104,6 +111,55 @@ const parseChunkRange = (handler: ZBinaryReader, containerTypes: Set<number>, pa
           if ((reader.length - reader.pos()) > 0) instance.data.diffuse = reader.readFloat()
           break
         case SectionId.AtomicSection:
+          instance.data.matIdBase = reader.readUInt32()
+          instance.data.triangles = new Array(reader.readUInt32())
+          instance.data.vertices = new Array(reader.readUInt32())
+          instance.data.bbox1 = reader.readVector3()
+          instance.data.bbox2 = reader.readVector3()
+          reader.readUInt32() // padding, unused?
+          reader.readUInt32() // padding, unused?
+          for(let i = 0; i < instance.data.vertices.length; ++i) {
+            instance.data.vertices[i] = reader.readVector3()
+          }
+          console.log(instance.parent.parent)
+          // const worldFormat = instance.parent?.data.format
+          // // console.log(instance.parent.parent?.children)
+          // if ((worldFormat & GeometryFormat.Normals) > 0) {
+          //   instance.data.normals = new Array(instance.data.vertices.length)
+          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
+          //     instance.data.normals[i] = Normal.read(handler)
+          //   }
+          // }
+          // if ((worldFormat & GeometryFormat.Prelit) > 0) {
+          //   instance.data.colors = new Array(instance.data.vertices.length)
+          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
+          //     instance.data.colors[i] = IColor.read(handler)
+          //   }
+          // }
+          // if ((worldFormat & (GeometryFormat.Textured | GeometryFormat.Textured2)) > 0) {
+          //   instance.data.texCoords1 = new Array(instance.data.vertices.length)
+          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
+          //     instance.data.texCoords1[i] = handler.readVector2()
+          //   }
+          // }
+          // if ((worldFormat & GeometryFormat.Textured) > 0) {
+          //   instance.data.texCoords2 = new Array(instance.data.vertices.length)
+          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
+          //     instance.data.texCoords2[i] = handler.readVector2()
+          //   }
+          // }
+          // for(let i = 0; i < instance.data.triangles.length; ++i) {
+          //   instance.data.triangles[i] = VertexTriangle.read(handler)
+          // }
+          console.log(reader.pos(), reader.length)
+          break
+        case SectionId.Texture:
+          instance.data.filterMode = reader.readInt8()
+          const addressing = reader.readInt8()
+          instance.data.uAddressingMode = addressing & 0xf
+          instance.data.vAddressingMode = addressing >> 4
+          instance.data.flags = reader.readUInt16()
+          instance.data.useMipLevels = (instance.data.flags & 1) > 0
           break
       }
     } else if (sectionId === SectionId.BinMeshPLG) {
@@ -124,12 +180,14 @@ const parseChunkRange = (handler: ZBinaryReader, containerTypes: Set<number>, pa
           matIndex
         }
       }
+    } else if (sectionId === SectionId.String) {
+      instance.data.value = reader.readString(reader.length)
     }
 
-    if (containerTypes.has(sectionId)) {
-      instance.children = parseChunkRange(reader, containerTypes, instance, depth + 1)
+    if (reader.pos() !== reader.length && Object.keys(instance.data).length === 0) {
+      console.log("(Data isn't parsed)")
     }
-
+    
     chunks.push(instance)
   }
 

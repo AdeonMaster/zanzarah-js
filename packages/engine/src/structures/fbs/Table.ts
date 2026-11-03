@@ -3,11 +3,7 @@ import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Row } from './Row.ts'
 
 export class Table {
-  rows: Row[]
-
-  constructor() {
-    this.rows = []
-  }
+  rows: Row[] = []
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.rows.length)
@@ -17,14 +13,12 @@ export class Table {
   }
 
   static read(handler: ZBinaryReader) {
-    const rowCount = handler.readUInt32()
-    const rows = new Array(rowCount)
-    for (let i = 0; i < rowCount; ++i) {
-      rows[i] = Row.read(handler)
-    }
-
     const instance = new this()
-    instance.rows = rows
+    const rowCount = handler.readUInt32()
+    instance.rows = new Array(rowCount)
+    for (let i = 0; i < rowCount; ++i) {
+      instance.rows[i] = Row.read(handler)
+    }
 
     return instance
   }

@@ -1,9 +1,13 @@
+import type { ZBinaryReader } from "../../utils/ZBinaryReader.ts";
 import { Section } from "./Section.ts";
 
-export class ListSection extends Section {
-  children: Section[]
+export abstract class ListSection extends Section {
+  children: Section[] = []
 
-  constructor() {
-    
+  protected override readBody(handler: ZBinaryReader) {
+    this.children = []
+    while((handler.length - handler.pos()) >= 12) {
+      this.children.push(Section.read(handler))
+    }
   }
 }

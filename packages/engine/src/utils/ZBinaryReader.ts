@@ -1,4 +1,5 @@
 import { Quaternion } from '../structures/math/Quaternion.ts'
+import { Vector2 } from '../structures/math/Vector2.ts'
 import { Vector3 } from '../structures/math/Vector3.ts'
 import { BinaryReader } from './BinaryReader.ts'
 
@@ -8,6 +9,13 @@ export class ZBinaryReader extends BinaryReader {
     const string = this.readString(len)
 
     return string
+  }
+
+  readVector2() {
+    const x = this.readFloat()
+    const y = this.readFloat()
+
+    return new Vector2(x, y)
   }
 
   readVector3() {
