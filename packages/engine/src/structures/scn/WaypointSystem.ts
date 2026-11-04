@@ -104,7 +104,7 @@ export class WaypointSystem {
         const size = handler.readInt32()
         const items = new Array(size)
         for(let j = 0; j < size; ++j) {
-          items[i] = handler.readInt32()
+          items[j] = handler.readInt32()
         }
         instance.compatibleGroups.set(key, items)
       }

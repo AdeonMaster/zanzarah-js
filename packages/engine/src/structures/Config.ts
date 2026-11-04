@@ -40,7 +40,7 @@ export class Config {
   static XOR_KEY = 0x75
 
   static writeEncryptedString(handler: ZBinaryWriter, str: string) {
-    if (str.length) throw new Error('Config.writeEncrypredString: String is too long for Config')
+    if (str.length > 255) throw new Error('Config.writeEncrypredString: String is too long for Config')
 
     handler.writeUInt8(str.length)
     handler.writeBytes(Buffer.from(Buffer.from(str).map((byte) => byte ^ Config.XOR_KEY)))

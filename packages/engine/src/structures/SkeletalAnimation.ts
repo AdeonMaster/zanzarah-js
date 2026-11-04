@@ -7,7 +7,7 @@ export class AnimationKeyFrame {
   rot: Quaternion = new Quaternion()
   pos: Vector3 = new Vector3()
   time: number = 0
-  parentFrameOffset: number = 0
+  parentFrameOffset: number = 0 //TODO: should be read/written?
 
   static ExpectedSize = (4 + 3 + 1 + 1) * 4
 

@@ -2,18 +2,18 @@ import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
-export const TriggerColliderType = {
-  Box: 0,
-  Sphere: 1,
-  Point: 2,
+export enum TriggerColliderType {
+  Box = 0,
+  Sphere = 1,
+  Point = 2,
 
-  Unknown: -1,
+  Unknown = -1,
 }
 
 export class Trigger {
   idx: number = 0
   requiresLooking: boolean = false
-  colliderType: number = 0
+  colliderType: TriggerColliderType = TriggerColliderType.Unknown
   dir: Vector3 = new Vector3()
   type: number = 0
   ii1: number = 0

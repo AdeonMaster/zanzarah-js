@@ -65,15 +65,24 @@ export type Patch = {
   }[]
 }
 
-export const normalizeMemory = (str: string) => str.split(' ').map((chunk) => parseInt(chunk, 16))
+export const normalizeMemory = (str: string) =>
+  str.split(' ').map((chunk) => parseInt(chunk, 16))
 
-export const getIsPatchApplied = (buffer: Buffer, name: string, patches: Patch[]) => {
+export const getIsPatchApplied = (
+  buffer: Buffer,
+  name: string,
+  patches: Patch[],
+) => {
   const patch = patches.find((p) => p.name === name)
   if (!patch) throw new Error('Invalid patch name')
 
   for (let i = 0; i < patch.steps.length; ++i) {
     const step = patch.steps[i]
-    const matches = findAllOccurrences(buffer, Buffer.from(normalizeMemory(step.expected)), step.offset)
+    const matches = findAllOccurrences(
+      buffer,
+      Buffer.from(normalizeMemory(step.expected)),
+      step.offset,
+    )
     if (matches.length === 0) return true
   }
 
@@ -85,16 +94,16 @@ export const applyPatch = (buffer: Buffer, name: string, patches: Patch[]) => {
   if (!patch) throw new Error('Invalid patch name')
 
   let tmpBuffer = Buffer.from(buffer)
-   for (let i = 0; i < patch.steps.length; ++i) {
+  for (let i = 0; i < patch.steps.length; ++i) {
     const step = patch.steps[i]
     const needle = Buffer.from(normalizeMemory(step.expected))
     const replacer = Buffer.from(normalizeMemory(step.replacement))
     const offset = step.offset
-    const matches = findAllOccurrences(buffer, needle, offset)
+    const matches = findAllOccurrences(tmpBuffer, needle, offset)
     if (matches.length === 0)
       throw new Error('Selected patch is already applied')
 
-    tmpBuffer = Buffer.from(replaceAt(buffer, matches[0], needle, replacer))
+    tmpBuffer = Buffer.from(replaceAt(tmpBuffer, matches[0], needle, replacer))
   }
 
   return tmpBuffer

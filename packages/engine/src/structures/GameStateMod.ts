@@ -1,36 +1,40 @@
-import type { BinaryReader } from '../utils/BinaryReader.ts'
-import type { BinaryWriter } from '../utils/BinaryWriter.ts'
+import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
-export const GameStateModType = {
-  DisableAttackTrigger: 0,
-  RemoveItem: 1,
-  ChangeNPCState: 2,
-  DisableTrigger: 3,
-  RemoveModel: 4,
-  SetTrigger: 5,
-  SetNPCModifier: 6,
+export enum GameStateModType {
+  DisableAttackTrigger,
+  RemoveItem,
+  ChangeNPCState,
+  DisableTrigger,
+  RemoveModel,
+  SetTrigger,
+  SetNPCModifier
 }
 
 export class GSModDisableAttackTrigger {
+  type: GameStateModType = GameStateModType.DisableAttackTrigger
   triggerId: number = 0
 
   constructor(triggerId: number) {
     this.triggerId = triggerId
   }
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.triggerId)
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     return new this(handle.readUInt32())
   }
 }
 
 export class GSModRemoveItem {
+  type: GameStateModType = GameStateModType.RemoveItem
   modelId: number = 0
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.modelId)
   }
 
@@ -38,12 +42,13 @@ export class GSModRemoveItem {
     this.modelId = modelId
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     return new this(handle.readUInt32())
   }
 }
 
 export class GSModChangeNPCState {
+  type: GameStateModType = GameStateModType.ChangeNPCState
   triggerId: number = 0
   uid: number = 0
 
@@ -52,12 +57,13 @@ export class GSModChangeNPCState {
     this.uid = uid
   }
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.uid)
     handle.writeUInt32(this.triggerId)
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     const uid = handle.readUInt32()
     const triggerId = handle.readUInt32()
 
@@ -66,38 +72,43 @@ export class GSModChangeNPCState {
 }
 
 export class GSModDisableTrigger {
+  type: GameStateModType = GameStateModType.DisableTrigger
   triggerId: number = 0
 
   constructor(triggerId: number) {
     this.triggerId = triggerId
   }
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.triggerId)
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     return new this(handle.readUInt32())
   }
 }
 
 export class GSModRemoveModel {
+  type: GameStateModType = GameStateModType.RemoveModel
   modelId: number = 0
 
   constructor(modelId: number) {
     this.modelId = modelId
   }
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.modelId)
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     return new this(handle.readUInt32())
   }
 }
 
 export class GSModSetTrigger {
+  type: GameStateModType = GameStateModType.SetTrigger
   triggerId: number
   ii1: number
   ii2: number
@@ -118,7 +129,8 @@ export class GSModSetTrigger {
     this.ii4 = ii4
   }
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.triggerId)
     handle.writeUInt32(this.ii1)
     handle.writeUInt32(this.ii2)
@@ -126,7 +138,7 @@ export class GSModSetTrigger {
     handle.writeUInt32(this.ii4)
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     return new this(
       handle.readUInt32(),
       handle.readUInt32(),
@@ -138,6 +150,7 @@ export class GSModSetTrigger {
 }
 
 export class GSModSetNPCModifier {
+  type: GameStateModType = GameStateModType.SetNPCModifier
   triggerId: number = 0
   value: number = 0
 
@@ -146,18 +159,19 @@ export class GSModSetNPCModifier {
     this.value = value
   }
 
-  write(handle: BinaryWriter) {
+  write(handle: ZBinaryWriter) {
+    handle.writeInt32(this.type)
     handle.writeUInt32(this.triggerId)
     handle.writeUInt32(this.value)
   }
 
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     return new this(handle.readUInt32(), handle.readUInt32())
   }
 }
 
 export class GameStateMod {
-  static read(handle: BinaryReader) {
+  static read(handle: ZBinaryReader) {
     const type = handle.readInt32()
 
     switch (type) {

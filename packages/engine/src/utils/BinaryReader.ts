@@ -68,10 +68,7 @@ export class BinaryReader {
   }
 
   readBool() {
-    const b = this.buffer.subarray(this.offset, this.offset + 1)
-    this.offset += 1
-
-    return !!b[0]
+    return this.readUInt8() !== 0
   }
 
   readString(length: number) {

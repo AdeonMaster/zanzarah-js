@@ -3,25 +3,25 @@ import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { FColor } from '../FColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
-export const LightType = {
-  Directional: 1,
-  Ambient: 2,
-  Point: 128,
-  Spot: 129,
+export enum LightType {
+  Directional = 1,
+  Ambient = 2,
+  Point = 128,
+  Spot = 129,
 
-  Unknown: -1,
+  Unknown = -1,
 }
 
-export const LightFlags = {
-  LightAtomics: 1 << 0,
-  LightWorld: 1 << 1,
+export enum LightFlags {
+  LightAtomics = 1 << 0,
+  LightWorld = 1 << 1,
 }
 
 export class Light {
   idx: number = 0
-  type: number = 0
+  type: LightType = LightType.Unknown
   color: FColor = new FColor()
-  flags: number = 0
+  flags: LightFlags = LightFlags.LightAtomics
   pos: Vector3 = new Vector3()
   vec: Vector3 = new Vector3()
   radius: number = 0.0

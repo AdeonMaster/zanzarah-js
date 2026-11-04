@@ -1,8 +1,8 @@
 import fs from 'node:fs'
+import path from 'node:path'
+import toml from 'toml'
 import type { CommandModule } from 'yargs'
 import { applyPatch, getIsPatchApplied } from './../patcher/index.ts'
-import toml from 'toml'
-import path from 'node:path'
 
 interface PatchArgs {
   name: string
