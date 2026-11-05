@@ -9,17 +9,17 @@ describe('Savegame class', () => {
   const instance = new Savegame()
 
   it('should properly write & read class', async () => {
-    const fd = fs.openSync('tmp.bin', 'w+')
+    const fd = fs.openSync('sg.bin', 'w+')
     const writeHandler = new ZBinaryWriter(fd)
     instance.write(writeHandler)
     fs.closeSync(fd)
 
-    const fd2 = fs.openSync('tmp.bin', 'r')
+    const fd2 = fs.openSync('sg.bin', 'r')
     const readHandler = new ZBinaryReader(fd2)
     const tmp = Savegame.read(readHandler)
     fs.closeSync(fd2)
 
-    fs.unlinkSync('tmp.bin')
+    fs.unlinkSync('sg.bin')
 
     assert.deepStrictEqual(instance, tmp)
   })
