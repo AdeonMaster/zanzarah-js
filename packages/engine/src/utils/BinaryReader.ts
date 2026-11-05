@@ -1,17 +1,22 @@
-import type { Float, Int16, Int32, Int8, UInt16, UInt32, UInt8 } from "../types.ts"
+import fs from 'node:fs'
+import type { Byte, Float, Int16, Int32, Int8, UInt16, UInt32, UInt8 } from '../types.ts'
 
 export class BinaryReader {
-  private buffer: Buffer
-  private offset: number
-  public length: number
+  private offset = 0
+  public readonly length: number
 
-  constructor(buffer: Buffer) {
-    this.buffer = buffer
-    this.offset = 0
-    this.length = buffer.length
+  constructor(private readonly source: number | Buffer) {
+    this.length =
+      typeof source === 'number'
+        ? fs.fstatSync(source).size
+        : source.length
   }
 
   seek(offset: number) {
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > this.length) {
+      throw new RangeError(`Invalid seek offset: ${offset}`)
+    }
+  
     this.offset = offset
   }
 
@@ -19,67 +24,84 @@ export class BinaryReader {
     return this.offset
   }
 
+  readBytes(length: number): Buffer {
+    if (!Number.isSafeInteger(length) || length < 0) {
+      throw new RangeError(`Invalid byte length: ${length}`)
+    }
+
+    if (length > this.length - this.offset) {
+      throw new Error(
+        `Cannot read ${length} bytes at offset ${this.offset}; source length is ${this.length}`,
+      )
+    }
+
+    const buffer = Buffer.allocUnsafe(length)
+
+    if (typeof this.source !== 'number') {
+      this.source.copy(buffer, 0, this.offset, this.offset + length)
+      this.offset += length
+      return buffer
+    }
+
+    let totalRead = 0
+
+    while (totalRead < length) {
+      const bytesRead = fs.readSync(
+        this.source,
+        buffer,
+        totalRead,
+        length - totalRead,
+        this.offset,
+      )
+
+      if (bytesRead === 0) {
+        throw new Error(`Unexpected end of file at offset ${this.offset}`)
+      }
+
+      totalRead += bytesRead
+      this.offset += bytesRead
+    }
+
+    return buffer
+  }
+
+  readByte() {
+    return this.readBytes(1)[0] as Byte
+  }
+
   readUInt8() {
-    const v = this.buffer.readUInt8(this.offset) as UInt8
-    this.offset += 1
-    return v
+    return this.readByte() as UInt8
   }
 
   readInt8() {
-    const v = this.buffer.readInt8(this.offset) as Int8
-    this.offset += 1
-    return v
+    return this.readBytes(1).readInt8(0) as Int8
   }
 
   readUInt16() {
-    const v = this.buffer.readUInt16LE(this.offset) as UInt16
-    this.offset += 2
-    return v
+    return this.readBytes(2).readUInt16LE(0) as UInt16
   }
 
   readInt16() {
-    const v = this.buffer.readInt16LE(this.offset) as Int16
-    this.offset += 2
-    return v
-  }
-
-  readUInt32() {
-    const v = this.buffer.readUInt32LE(this.offset) as UInt32
-    this.offset += 4
-    return v
+    return this.readBytes(2).readInt16LE(0) as Int16
   }
 
   readInt32() {
-    const v = this.buffer.readInt32LE(this.offset) as Int32
-    this.offset += 4
-    return v
+    return this.readBytes(4).readInt32LE(0) as Int32
   }
 
-  readBytes(count: number) {
-    if (
-      !Number.isInteger(count) ||
-      count < 0 ||
-      this.offset + count > this.buffer.length
-    ) {
-      throw new RangeError('Unexpected end of buffer')
-    }
-
-    const b = this.buffer.subarray(this.offset, this.offset + count)
-    this.offset += count
-    return b
+  readUInt32() {
+    return this.readBytes(4).readUInt32LE(0) as UInt32
   }
 
   readBool() {
-    return this.readUInt8() !== 0
-  }
-
-  readString(length: number) {
-    return this.readBytes(length).toString('ascii')
+    return this.readByte() !== 0
   }
 
   readFloat() {
-    const v = this.buffer.readFloatLE(this.offset) as Float
-    this.offset += 4
-    return v
+    return this.readBytes(4).readFloatLE(0) as Float
+  }
+
+  readString(length: number, encoding: BufferEncoding = 'ascii') {
+    return this.readBytes(length).toString(encoding)
   }
 }

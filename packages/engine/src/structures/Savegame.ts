@@ -14,6 +14,35 @@ import {
 import { InventoryCard } from './InventoryCard.ts'
 import { Version } from './Version.ts'
 
+export class GlobalVar {
+  static readonly Count = 49
+
+  changeCount: UInt32 = 0
+  value: UInt32 = 0
+
+  constructor(changeCount: UInt32 = 0, value: UInt32 = 0) {
+    this.changeCount = changeCount
+    this.value = value
+  }
+
+  static createSet() {
+    return new Array(GlobalVar.Count).fill(new GlobalVar(Math.floor(Math.random() * (2 << 16)), 0))
+  }
+
+  write(handler: ZBinaryWriter) {
+    handler.writeUInt32(this.changeCount)
+    handler.writeUInt32(this.value)
+  }
+
+  static read(handler: ZBinaryReader) {
+    const instance = new this()
+    instance.changeCount = handler.readUInt32()
+    instance.value = handler.readUInt32()
+
+    return instance
+  }
+}
+
 export class Savegame {
   version: Version = new Version()
   name: string = ''
@@ -36,7 +65,7 @@ export class Savegame {
   items: InventoryCard[] = []
   pixiesHolding: UInt32 = 0
   pixiesCatched: UInt32 = 0
-  globalVars: [UInt32, UInt32][] = new Array(49).fill([0, 0]) //TODO: probably should be read from .fbs?
+  globalVars: GlobalVar[] = GlobalVar.createSet()
   switchGameMinMoves: UInt32 = 9999
 
   write(handler: ZBinaryWriter) {
@@ -63,12 +92,9 @@ export class Savegame {
     }
     handler.writeUInt32(this.pixiesHolding)
     handler.writeUInt32(this.pixiesCatched)
-    handler.writeInt32(49)
-    for (let i = 0; i < 49; ++i) {
-      const globalVar = this.globalVars[i]
-
-      handler.writeUInt32(globalVar[0])
-      handler.writeUInt32(globalVar[1])
+    handler.writeInt32(GlobalVar.Count)
+    for (let i = 0; i < GlobalVar.Count; ++i) {
+      this.globalVars[i].write(handler)
     }
     handler.writeUInt32(this.switchGameMinMoves)
   }
@@ -106,14 +132,11 @@ export class Savegame {
     }
     const pixiesHolding = handler.readUInt32()
     const pixiesCatched = handler.readUInt32()
-    if (handler.readInt32() !== 49)
+    if (handler.readInt32() !== GlobalVar.Count)
       throw new Error('Savegame.read: Invalid global variable count')
-    const globalVars = new Array(49)
-    for (let i = 0; i < 49; ++i) {
-      const changeCount = handler.readUInt32()
-      const value = handler.readUInt32()
-
-      globalVars[i] = [changeCount, value]
+    const globalVars = new Array(GlobalVar.Count)
+    for (let i = 0; i < GlobalVar.Count; ++i) {
+      globalVars[i] = GlobalVar.read(handler)
     }
     const switchGameMinMoves = handler.readUInt32()
 

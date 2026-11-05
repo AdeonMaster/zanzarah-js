@@ -1,81 +1,129 @@
-import type { Float, Int16, Int32, Int8, UInt16, UInt32, UInt8 } from "../types.ts"
+import fs from 'node:fs'
+import type { Byte, Float, Int16, Int32, Int8, UInt16, UInt32, UInt8 } from '../types.ts'
 
 export class BinaryWriter {
-  private chunks: Buffer[]
-  private length: number
+  private offset = 0
+  public length: number
 
-  constructor() {
-    this.chunks = []
-    this.length = 0
+  constructor(private source: number | Buffer) {
+    this.length =
+      typeof source === 'number'
+        ? fs.fstatSync(source).size
+        : source.length
   }
 
-  writeUInt8(v: UInt8) {
-    const b = Buffer.allocUnsafe(1)
-    b.writeUInt8(v >>> 0)
-    this.chunks.push(b)
-    this.length += 1
+  seek(offset: number) {
+    if (!Number.isSafeInteger(offset) || offset < 0) {
+      throw new RangeError(`Invalid seek offset: ${offset}`)
+    }
+
+    this.offset = offset
   }
 
-  writeInt8(v: Int8) {
-    const b = Buffer.allocUnsafe(1)
-    b.writeUInt8(v | 0)
-    this.chunks.push(b)
-    this.length += 1
+  pos() {
+    return this.offset
   }
 
-  writeUInt16(v: UInt16) {
-    const b = Buffer.allocUnsafe(2)
-    b.writeUInt16LE(v >>> 0)
-    this.chunks.push(b)
-    this.length += 2
+  writeBytes(bytes: Buffer) {
+    if (bytes.length === 0) {
+      return
+    }
+
+    const end = this.offset + bytes.length
+
+    if (!Number.isSafeInteger(end)) {
+      throw new RangeError(`Invalid write end offset: ${end}`)
+    }
+
+    if (typeof this.source !== 'number') {
+      if (end > this.source.length) {
+        // Grow geometrically to avoid reallocating for every small write.
+        const capacity = Math.max(end, this.source.length * 2, 1024)
+
+        // Zero-filled allocation also handles seeking beyond the current end.
+        const buffer = Buffer.alloc(capacity)
+        this.source.copy(buffer, 0, 0, this.length)
+        this.source = buffer
+      }
+
+      bytes.copy(this.source, this.offset)
+      this.offset = end
+      this.length = Math.max(this.length, end)
+      return
+    }
+
+    let totalWritten = 0
+
+    while (totalWritten < bytes.length) {
+      const bytesWritten = fs.writeSync(
+        this.source,
+        bytes,
+        totalWritten,
+        bytes.length - totalWritten,
+        this.offset,
+      )
+
+      if (bytesWritten === 0) {
+        throw new Error(`Could not write at offset ${this.offset}`)
+      }
+
+      totalWritten += bytesWritten
+      this.offset += bytesWritten
+      this.length = Math.max(this.length, this.offset)
+    }
   }
 
-  writeInt16(v: Int16) {
-    const b = Buffer.allocUnsafe(2)
-    b.writeUInt16LE(v | 0)
-    this.chunks.push(b)
-    this.length += 2
+  writeByte(value: Byte) {
+    this.writeUInt8(value)
   }
 
-  writeUInt32(v: UInt32) {
-    const b = Buffer.allocUnsafe(4)
-    b.writeUInt32LE(v >>> 0)
-    this.chunks.push(b)
-    this.length += 4
+  writeUInt8(value: UInt8) {
+    const buffer = Buffer.allocUnsafe(1)
+    buffer.writeUInt8(value)
+    this.writeBytes(buffer)
   }
 
-  writeInt32(v: Int32) {
-    const b = Buffer.allocUnsafe(4)
-    b.writeInt32LE(v | 0)
-    this.chunks.push(b)
-    this.length += 4
+  writeInt8(value: Int8) {
+    const buffer = Buffer.allocUnsafe(1)
+    buffer.writeInt8(value)
+    this.writeBytes(buffer)
   }
 
-  writeString(str: string, len: number, pad = '\0') {
-    const b = Buffer.alloc(len, pad.charCodeAt(0))
-    b.write(str, 'ascii')
-    this.chunks.push(b)
-    this.length += len
+  writeUInt16(value: UInt16) {
+    const buffer = Buffer.allocUnsafe(2)
+    buffer.writeUInt16LE(value)
+    this.writeBytes(buffer)
   }
 
-  writeBytes(buf: Buffer) {
-    this.chunks.push(buf)
-    this.length += buf.length
+  writeInt16(value: Int16) {
+    const buffer = Buffer.allocUnsafe(2)
+    buffer.writeInt16LE(value)
+    this.writeBytes(buffer)
   }
 
-  writeBool(bool: boolean) {
-    this.chunks.push(Buffer.from([Number(bool)]))
-    this.length += 1
+  writeInt32(value: Int32) {
+    const buffer = Buffer.allocUnsafe(4)
+    buffer.writeInt32LE(value)
+    this.writeBytes(buffer)
   }
 
-  writeFloat(v: Float) {
-    const b = Buffer.allocUnsafe(4)
-    b.writeFloatLE(v)
-    this.chunks.push(b)
-    this.length += 4
+  writeUInt32(value: UInt32) {
+    const buffer = Buffer.allocUnsafe(4)
+    buffer.writeUInt32LE(value)
+    this.writeBytes(buffer)
   }
 
-  toBuffer() {
-    return Buffer.concat(this.chunks, this.length)
+  writeBool(value: boolean) {
+    this.writeUInt8(value ? 1 : 0)
+  }
+
+  writeFloat(value: Float) {
+    const buffer = Buffer.allocUnsafe(4)
+    buffer.writeFloatLE(value)
+    this.writeBytes(buffer)
+  }
+
+  writeString(value: string, encoding: BufferEncoding = 'ascii') {
+    this.writeBytes(Buffer.from(value, encoding))
   }
 }

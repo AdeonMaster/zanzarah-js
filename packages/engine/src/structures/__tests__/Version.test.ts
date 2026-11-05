@@ -1,4 +1,5 @@
 import { describe, it } from "node:test"
+import fs from "node:fs"
 import assert from 'node:assert'
 import { Version } from "../Version.ts"
 import { ZBinaryWriter } from "../../utils/ZBinaryWriter.ts"
@@ -12,13 +13,17 @@ describe('Version class', () => {
   instance.year = 2026
 
   it('should properly write & read class', () => {
-    const writeHandler = new ZBinaryWriter()
+    const fd = fs.openSync('tmp.bin', 'w+')
+    const writeHandler = new ZBinaryWriter(fd)
     instance.write(writeHandler)
-    const writeBuffer = writeHandler.toBuffer()
+    fs.closeSync(fd)
 
-    const readBuffer = Buffer.from(writeBuffer)
-    const readHandler = new ZBinaryReader(readBuffer)
+    const fd2 = fs.openSync('tmp.bin', 'r')
+    const readHandler = new ZBinaryReader(fd2)
     const tmp = Version.read(readHandler)
+    fs.closeSync(fd2)
+
+    fs.unlinkSync('tmp.bin')
 
     assert.deepStrictEqual(instance, tmp)
   })

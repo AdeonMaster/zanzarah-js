@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { ZBinaryReader } from './utils/ZBinaryReader.ts'
 import { Savegame } from './structures/Savegame.ts'
+import { Table } from './structures/fbs/Table.ts'
 
 export { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
 export { PAKArchive, type PAKArchiveEntry } from './structures/PAKArchive.ts'
@@ -16,11 +17,17 @@ export { Table } from './structures/fbs/Table.ts'
 export { Config } from './structures/Config.ts'
 export { Section as RWSection } from './structures/_rwbs/Section.ts'
 
-const pathToSave = '..\\..\\examples\\Save\\_0000.dat'
-const buffer = fs.readFileSync(pathToSave)
-const reader = new ZBinaryReader(buffer)
-const sg = Savegame.read(reader)
-console.dir(sg, { depth: null })
+// const pathToSave = '..\\..\\examples\\Save\\_0000.dat'
+// const fd = fs.openSync(pathToSave, 'r')
+// const reader = new ZBinaryReader(fd)
+// const sg = Savegame.read(reader)
+// console.dir(sg, { depth: null })
+
+const pathToFbs = '..\\..\\examples\\Data'
+const fd2 = fs.openSync(pathToFbs + '\\_fb0x01.fbs', 'r')
+const reader2 = new ZBinaryReader(fd2)
+const table = Table.read(reader2)
+console.log(table.rows.length)
 
 // const pathToFile = `dump\\RESOURCES\\WORLDS\\DUMMY.BSP`
 // const buffer = fs.readFileSync(pathToFile)

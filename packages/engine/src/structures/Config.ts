@@ -1,4 +1,4 @@
-import type { Float } from "../types.ts";
+import type { Float, UInt8 } from "../types.ts";
 import type { ZBinaryReader } from "../utils/ZBinaryReader.ts";
 import type { ZBinaryWriter } from "../utils/ZBinaryWriter.ts";
 
@@ -43,7 +43,7 @@ export class Config {
   static writeEncryptedString(handler: ZBinaryWriter, str: string) {
     if (str.length > 255) throw new Error('Config.writeEncrypredString: String is too long for Config')
 
-    handler.writeUInt8(str.length)
+    handler.writeUInt8(str.length as UInt8)
     handler.writeBytes(Buffer.from(Buffer.from(str).map((byte) => byte ^ Config.XOR_KEY)))
     handler.writeUInt8(0)
   }
