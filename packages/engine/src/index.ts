@@ -1,10 +1,14 @@
 import fs from 'node:fs'
-import { ZBinaryReader } from './utils/ZBinaryReader.ts'
-import { Savegame } from './structures/Savegame.ts'
 import { Table } from './structures/fbs/Table.ts'
+import { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
+import { Savegame } from './structures/Savegame.ts'
+import { ZBinaryReader } from './utils/ZBinaryReader.ts'
 
-export { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
+export { Config } from './structures/Config.ts'
+export { IndexTable } from './structures/fbs/IndexTable.ts'
+export { Table } from './structures/fbs/Table.ts'
 export { PAKArchive, type PAKArchiveEntry } from './structures/PAKArchive.ts'
+export { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
 export { Savegame } from './structures/Savegame.ts'
 export { LightType } from './structures/scn/Light.ts'
 export { Scene } from './structures/scn/Scene.ts'
@@ -12,10 +16,6 @@ export { BinaryReader } from './utils/BinaryReader.ts'
 export { BinaryWriter } from './utils/BinaryWriter.ts'
 export { ZBinaryReader } from './utils/ZBinaryReader.ts'
 export { ZBinaryWriter } from './utils/ZBinaryWriter.ts'
-export { IndexTable } from './structures/fbs/IndexTable.ts'
-export { Table } from './structures/fbs/Table.ts'
-export { Config } from './structures/Config.ts'
-export { Section as RWSection } from './structures/_rwbs/Section.ts'
 
 // const pathToSave = '..\\..\\examples\\Save\\_0000.dat'
 // const fd = fs.openSync(pathToSave, 'r')
@@ -23,17 +23,17 @@ export { Section as RWSection } from './structures/_rwbs/Section.ts'
 // const sg = Savegame.read(reader)
 // console.dir(sg, { depth: null })
 
-const pathToFbs = '..\\..\\examples\\Data'
-const fd2 = fs.openSync(pathToFbs + '\\_fb0x01.fbs', 'r')
-const reader2 = new ZBinaryReader(fd2)
-const table = Table.read(reader2)
-console.log(table.rows.length)
+// const pathToFbs = '..\\..\\examples\\Data'
+// const fd2 = fs.openSync(pathToFbs + '\\_fb0x01.fbs', 'r')
+// const reader2 = new ZBinaryReader(fd2)
+// const table = Table.read(reader2)
+// console.log(table.rows.length)
 
-// const pathToFile = `dump\\RESOURCES\\WORLDS\\DUMMY.BSP`
-// const buffer = fs.readFileSync(pathToFile)
-// const reader = new ZBinaryReader(buffer)
-// const bsp = BSP.read(reader)
-// console.log(bsp)
+const pathToFile = `..\\..\\dump\\RESOURCES\\WORLDS\\DUMMY.BSP`
+const buffer = fs.readFileSync(pathToFile)
+const reader = new ZBinaryReader(buffer)
+const bsp = RWBinaryFile.read(reader)
+console.dir(bsp[0].dump())
 
 // const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sd_1000.scn`
 // const buffer = fs.readFileSync(pathToFile)

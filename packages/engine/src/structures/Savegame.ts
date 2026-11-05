@@ -26,7 +26,9 @@ export class GlobalVar {
   }
 
   static createSet() {
-    return new Array(GlobalVar.Count).fill(new GlobalVar(Math.floor(Math.random() * (2 << 16)), 0))
+    return new Array(GlobalVar.Count).fill(
+      new GlobalVar(Math.floor(Math.random() * (2 << 16)), 0),
+    )
   }
 
   write(handler: ZBinaryWriter) {

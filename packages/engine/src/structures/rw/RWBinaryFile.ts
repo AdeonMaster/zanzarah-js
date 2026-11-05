@@ -1,58 +1,103 @@
-import { ZBinaryReader } from "../../utils/ZBinaryReader.ts"
-import { SectionId } from "./SectionID.ts"
-import { IColor } from "../IColor.ts"
-import { GeometryFormat } from "./GeometryFormat.ts"
-import { Normal } from "../Normal.ts"
-import { VertexTriangle } from "../VertexTriangle.ts"
+import { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
+import type { RWHeader } from './RWHeader.ts'
+import type { RWSection } from './RWSection.ts'
+import { SectionId } from './SectionID.ts'
+import {
+  RWAtomicSection,
+  RWAtomicSectionStruct,
+} from './sections/RWAtomicSection.ts'
+import { RWBinMeshPLG } from './sections/RWBinMeshPLG.ts'
+import { RWClump } from './sections/RWClump.ts'
+import { RWExtension } from './sections/RWExtension.ts'
+import { RWFrameList } from './sections/RWFrameList.ts'
+import { RWGeometry } from './sections/RWGeometry.ts'
+import { RWGeometryList } from './sections/RWGeometryList.ts'
+import { RWMaterial, RWMaterialStruct } from './sections/RWMaterial.ts'
+import {
+  RWMaterialList,
+  RWMaterialListStruct,
+} from './sections/RWMaterialList.ts'
+import {
+  RWPlaneSection,
+  RWPlaneSectionStruct,
+} from './sections/RWPlaneSection.ts'
+import { RWString } from './sections/RWString.ts'
+import { RWTexture, RWTextureStruct } from './sections/RWTexture.ts'
+import { RWTextureDictionary } from './sections/RWTextureDictionary.ts'
+import { RWUnknown } from './sections/RWUnknown.ts'
+import { RWWorld, RWWorldStruct } from './sections/RWWorld.ts'
 
-// Only recurse into types whose payload is a sequence of chunks.
-const CONTAINER_TYPES = new Set<number>([
-  SectionId.Extension,
-  SectionId.Texture,
-  SectionId.Material,
-  SectionId.MaterialList,
-  SectionId.FrameList,
-  SectionId.Geometry,
-  SectionId.Clump,
-  SectionId.Atomic,
-  SectionId.TextureDictionary,
-  SectionId.GeometryList,
-  SectionId.World,
-  SectionId.AtomicSection,
-  SectionId.Extension
+type ChunkCtor = new (header: RWHeader, parent: RWSection | null) => RWSection
+
+/** Section id -> class (for everything except Struct). */
+const CHUNK_CLASSES = new Map<number, ChunkCtor>([
+  [SectionId.Extension, RWExtension],
+  [SectionId.Texture, RWTexture],
+  [SectionId.Material, RWMaterial],
+  [SectionId.MaterialList, RWMaterialList],
+  [SectionId.FrameList, RWFrameList],
+  [SectionId.Geometry, RWGeometry],
+  [SectionId.Clump, RWClump],
+  [SectionId.Atomic, RWAtomicSection],
+  [SectionId.TextureDictionary, RWTextureDictionary],
+  [SectionId.GeometryList, RWGeometryList],
+  [SectionId.World, RWWorld],
+  [SectionId.PlaneSection, RWPlaneSection], // 0x0A - add to SectionId if missing
+  [SectionId.AtomicSection, RWAtomicSection],
+  [SectionId.String, RWString],
+  [SectionId.BinMeshPLG, RWBinMeshPLG],
 ])
 
-class RWChunk {
-  sectionName: string = ''
+/** A Struct's layout depends on its parent: parent section id -> struct class. */
+const STRUCT_CLASSES = new Map<number, ChunkCtor>([
+  [SectionId.World, RWWorldStruct],
+  [SectionId.MaterialList, RWMaterialListStruct],
+  [SectionId.Material, RWMaterialStruct],
+  [SectionId.Texture, RWTextureStruct],
+  [SectionId.PlaneSection, RWPlaneSectionStruct],
+  [SectionId.AtomicSection, RWAtomicSectionStruct],
+])
 
-  sectionId: number = 0
-  size: number = 0
-  version: number = 0
-  parent: RWChunk | null = null
-  children: RWChunk[] = []
-  data: { [x: string]: any } = {}
+const createSection = (
+  header: RWHeader,
+  parent: RWSection | null,
+): RWSection => {
+  const Ctor =
+    header.sectionId === SectionId.Struct
+      ? STRUCT_CLASSES.get(parent?.sectionId ?? -1)
+      : CHUNK_CLASSES.get(header.sectionId)
+
+  return new (Ctor ?? RWUnknown)(header, parent)
 }
 
-const parseChunkRange = (handler: ZBinaryReader, containerTypes: Set<number>, parent: RWChunk | null, depth: number = 0) => {
-  const chunks: RWChunk[] = []
+export interface ReadOptions {
+  /** Called for non-fatal problems (unknown chunks, unread trailing bytes). */
+  onWarn?: (message: string) => void
+}
+
+const parseChunks = (
+  handler: ZBinaryReader,
+  parent: RWSection | null,
+  options: ReadOptions,
+): RWSection[] => {
+  // Write straight into the parent's children so that chunks are visible in
+  // the tree while their later siblings / descendants are still being parsed.
+  const out: RWSection[] = parent ? parent.children : []
 
   while (handler.pos() < handler.length) {
-    const sectionOffset = handler.pos()
-    const remaining = handler.length - sectionOffset
+    const offset = handler.pos()
+    const remaining = handler.length - offset
 
     if (remaining < 4) {
-      throw new Error(`Incomplete section ID at offset ${sectionOffset}`)
+      throw new Error(`Incomplete section ID at offset ${offset}`)
     }
 
     const sectionId = handler.readInt32()
-    console.log(`${new Array(depth).fill('-').join('')}${SectionId[sectionId]}`)
-    if (sectionId === SectionId.EOF) {
-      break
-    }
+    if (sectionId === SectionId.EOF) break
 
     if (remaining < 12) {
       throw new Error(
-        `Incomplete section header at offset ${sectionOffset}: ${remaining} bytes remain`,
+        `Incomplete section header at offset ${offset}: ${remaining} bytes remain`,
       )
     }
 
@@ -61,141 +106,43 @@ const parseChunkRange = (handler: ZBinaryReader, containerTypes: Set<number>, pa
 
     if (size > handler.length - handler.pos()) {
       throw new Error(
-        `Section ${SectionId[sectionId]} at offset ${sectionOffset} declares ${size} data bytes, but only ${handler.length - handler.pos()} remain`,
+        `Section ${SectionId[sectionId] ?? sectionId} at offset ${offset} declares ${size} data bytes, ` +
+          `but only ${handler.length - handler.pos()} remain`,
       )
     }
 
-    const data = handler.readBytes(size)
-    const reader = new ZBinaryReader(data)
+    const chunk = createSection({ sectionId, size, version, offset }, parent)
+    out.push(chunk) // attach BEFORE parsing the payload
 
-    const instance = new RWChunk()
-    instance.sectionName = SectionId[sectionId]
-    instance.sectionId = sectionId
-    instance.size = size
-    instance.version = version
-    instance.parent = parent
-    instance.children = []
+    const reader = new ZBinaryReader(handler.readBytes(size))
 
-    if (containerTypes.has(sectionId)) {
-      instance.children = parseChunkRange(reader, containerTypes, instance, depth + 1)
-    }
+    if (chunk.isContainer) {
+      parseChunks(reader, chunk, options)
+    } else {
+      chunk.read(reader)
 
-    if (sectionId == SectionId.Struct) {
-      switch(parent?.sectionId) {
-        case SectionId.World:
-          instance.data.rootIsWorldSector = reader.readUInt32() > 0
-          instance.data.origin = reader.readVector3()
-          instance.data.ambient = reader.readFloat()
-          instance.data.specular = reader.readFloat()
-          instance.data.diffuse = reader.readFloat()
-          instance.data.numTriangles = reader.readUInt32()
-          instance.data.numVertices = reader.readUInt32()
-          instance.data.numPlaneSectors = reader.readUInt32()
-          instance.data.numWorldSectors = reader.readUInt32()
-          instance.data.colSectorSize = reader.readUInt32()
-          instance.data.format = reader.readUInt32()
-          break
-        case SectionId.MaterialList:
-          const materialIndicesLen = reader.readUInt32()
-          instance.data.materialIndices = new Array(materialIndicesLen)
-          for (let i = 0; i < materialIndicesLen; ++i) {
-            instance.data.materialIndices[i] = reader.readInt32()
-          }
-          break
-        case SectionId.Material:
-          instance.data.flags = reader.readUInt32()
-          instance.data.color = IColor.read(reader)
-          instance.data.isTextured = reader.readUInt32() > 0
-          if ((reader.length - reader.pos()) > 0) instance.data.ambient = reader.readFloat()
-          if ((reader.length - reader.pos()) > 0) instance.data.specular = reader.readFloat()
-          if ((reader.length - reader.pos()) > 0) instance.data.diffuse = reader.readFloat()
-          break
-        case SectionId.AtomicSection:
-          instance.data.matIdBase = reader.readUInt32()
-          instance.data.triangles = new Array(reader.readUInt32())
-          instance.data.vertices = new Array(reader.readUInt32())
-          instance.data.bbox1 = reader.readVector3()
-          instance.data.bbox2 = reader.readVector3()
-          reader.readUInt32() // padding, unused?
-          reader.readUInt32() // padding, unused?
-          for(let i = 0; i < instance.data.vertices.length; ++i) {
-            instance.data.vertices[i] = reader.readVector3()
-          }
-          console.log(instance.parent.parent)
-          // const worldFormat = instance.parent?.data.format
-          // // console.log(instance.parent.parent?.children)
-          // if ((worldFormat & GeometryFormat.Normals) > 0) {
-          //   instance.data.normals = new Array(instance.data.vertices.length)
-          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
-          //     instance.data.normals[i] = Normal.read(handler)
-          //   }
-          // }
-          // if ((worldFormat & GeometryFormat.Prelit) > 0) {
-          //   instance.data.colors = new Array(instance.data.vertices.length)
-          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
-          //     instance.data.colors[i] = IColor.read(handler)
-          //   }
-          // }
-          // if ((worldFormat & (GeometryFormat.Textured | GeometryFormat.Textured2)) > 0) {
-          //   instance.data.texCoords1 = new Array(instance.data.vertices.length)
-          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
-          //     instance.data.texCoords1[i] = handler.readVector2()
-          //   }
-          // }
-          // if ((worldFormat & GeometryFormat.Textured) > 0) {
-          //   instance.data.texCoords2 = new Array(instance.data.vertices.length)
-          //   for(let i = 0; i < instance.data.vertices.length; ++i) {
-          //     instance.data.texCoords2[i] = handler.readVector2()
-          //   }
-          // }
-          // for(let i = 0; i < instance.data.triangles.length; ++i) {
-          //   instance.data.triangles[i] = VertexTriangle.read(handler)
-          // }
-          console.log(reader.pos(), reader.length)
-          break
-        case SectionId.Texture:
-          instance.data.filterMode = reader.readInt8()
-          const addressing = reader.readInt8()
-          instance.data.uAddressingMode = addressing & 0xf
-          instance.data.vAddressingMode = addressing >> 4
-          instance.data.flags = reader.readUInt16()
-          instance.data.useMipLevels = (instance.data.flags & 1) > 0
-          break
+      if (chunk instanceof RWUnknown) {
+        options.onWarn?.(
+          `Unparsed section ${chunk.sectionName} at offset ${offset}`,
+        )
+      } else if (reader.pos() !== reader.length) {
+        options.onWarn?.(
+          `${chunk.sectionName} at offset ${offset}: ${reader.length - reader.pos()} trailing bytes not consumed`,
+        )
       }
-    } else if (sectionId === SectionId.BinMeshPLG) {
-      instance.data.type = reader.readInt32()
-      const subMeshesLen = reader.readUInt32()
-      instance.data.totalIndexCount = reader.readUInt32()
-      instance.data.subMeshes = new Array(subMeshesLen)
-      for(let i = 0; i < subMeshesLen; ++i) {
-        const totalIndeces = reader.readUInt32()
-        const matIndex = reader.readUInt32()
-        const indices = new Array(totalIndeces)
-        for(let j = 0; j < totalIndeces; ++j) {
-          indices[j] = reader.readInt32()
-        }
-
-        instance.data.subMeshes[i] = {
-          indices,
-          matIndex
-        }
-      }
-    } else if (sectionId === SectionId.String) {
-      instance.data.value = reader.readString(reader.length)
     }
-
-    if (reader.pos() !== reader.length && Object.keys(instance.data).length === 0) {
-      console.log("(Data isn't parsed)")
-    }
-    
-    chunks.push(instance)
   }
 
-  return chunks
+  return out
 }
 
 export class RWBinaryFile {
-  static read(handler: ZBinaryReader) {
-    return parseChunkRange(handler, CONTAINER_TYPES, null)
+  static read(handler: ZBinaryReader, options: ReadOptions = {}): RWSection[] {
+    return parseChunks(handler, null, options)
+  }
+
+  /** Pretty-print the chunk tree. */
+  static dump(chunks: RWSection[]): string {
+    return chunks.map((c) => c.dump()).join('\n')
   }
 }

@@ -1,5 +1,14 @@
 import fs from 'node:fs'
-import type { Byte, Float, Int16, Int32, Int8, UInt16, UInt32, UInt8 } from '../types.ts'
+import type {
+  Byte,
+  Float,
+  Int8,
+  Int16,
+  Int32,
+  UInt8,
+  UInt16,
+  UInt32,
+} from '../types.ts'
 
 export class BinaryReader {
   private offset = 0
@@ -7,16 +16,14 @@ export class BinaryReader {
 
   constructor(private readonly source: number | Buffer) {
     this.length =
-      typeof source === 'number'
-        ? fs.fstatSync(source).size
-        : source.length
+      typeof source === 'number' ? fs.fstatSync(source).size : source.length
   }
 
   seek(offset: number) {
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > this.length) {
       throw new RangeError(`Invalid seek offset: ${offset}`)
     }
-  
+
     this.offset = offset
   }
 

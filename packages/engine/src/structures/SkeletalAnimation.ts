@@ -45,17 +45,21 @@ export class SkeletalAnimation {
     instance.duration = handler.readFloat()
 
     const allFrames = new Array(frameCount)
-    for(let i = 0; i < frameCount; ++i) {
+    for (let i = 0; i < frameCount; ++i) {
       allFrames[i] = AnimationKeyFrame.read(handler)
     }
 
     const frameBones = new Array(frameCount)
     let nextBoneI = 0
-    for(let i = 0; i < frameCount; ++i) {
-      if (allFrames[i].parentFrameOffset < 0) // new unknown bone
+    for (let i = 0; i < frameCount; ++i) {
+      if (allFrames[i].parentFrameOffset < 0)
+        // new unknown bone
         frameBones[i] = nextBoneI++
       else
-        frameBones[i] = frameBones[allFrames[i].parentFrameOffset / AnimationKeyFrame.ExpectedSize]
+        frameBones[i] =
+          frameBones[
+            allFrames[i].parentFrameOffset / AnimationKeyFrame.ExpectedSize
+          ]
     }
 
     instance.boneFrames = [] // TODO: finish this!!

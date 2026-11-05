@@ -1,4 +1,4 @@
-import type { Float } from "../../types.ts"
+import type { Float } from '../../types.ts'
 
 export class Vector3 {
   x: Float

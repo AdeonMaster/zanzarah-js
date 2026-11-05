@@ -1,9 +1,9 @@
-import { describe, it } from "node:test"
-import fs from "node:fs"
 import assert from 'node:assert'
-import { Version } from "../Version.ts"
-import { ZBinaryWriter } from "../../utils/ZBinaryWriter.ts"
-import { ZBinaryReader } from "../../utils/ZBinaryReader.ts"
+import fs from 'node:fs'
+import { describe, it } from 'node:test'
+import { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
+import { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
+import { Version } from '../Version.ts'
 
 describe('Version class', () => {
   const instance = new Version()

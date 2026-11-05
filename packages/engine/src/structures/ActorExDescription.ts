@@ -29,18 +29,18 @@ export class ActorExDescription {
   effectBoneID: Int32 = -1
 
   write(handler: ZBinaryWriter) {
-    handler.writeZString("[ActorExDescriptionFile]")
-    this.body.write(handler, "Body")
+    handler.writeZString('[ActorExDescriptionFile]')
+    this.body.write(handler, 'Body')
     if (this.wings.model.length > 0) {
-      this.wings.write(handler, "Wings")
+      this.wings.write(handler, 'Wings')
     }
-    handler.writeZString("[AttachWingsToBone]")
+    handler.writeZString('[AttachWingsToBone]')
     handler.writeInt32(this.attachWingsToBone)
-    handler.writeZString("[HeadBoneID]")
+    handler.writeZString('[HeadBoneID]')
     handler.writeInt32(this.headBoneID)
-    handler.writeZString("[EffectBoneID]")
+    handler.writeZString('[EffectBoneID]')
     handler.writeInt32(this.effectBoneID)
-    handler.writeZString("[EOS]")
+    handler.writeZString('[EOS]')
   }
 
   static read(handler: ZBinaryReader) {
@@ -114,7 +114,10 @@ export class ActorExDescription {
     }
 
     instance.body.animations = [...instance.body.animations, ...bodyAnimations]
-    instance.wings.animations = [...instance.wings.animations, ...wingsAnimations]
+    instance.wings.animations = [
+      ...instance.wings.animations,
+      ...wingsAnimations,
+    ]
 
     return instance
   }

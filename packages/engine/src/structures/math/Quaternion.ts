@@ -1,4 +1,4 @@
-import type { Float } from "../../types.ts"
+import type { Float } from '../../types.ts'
 
 export class Quaternion {
   x: Float

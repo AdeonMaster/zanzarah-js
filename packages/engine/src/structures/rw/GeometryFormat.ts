@@ -9,5 +9,5 @@ export enum GeometryFormat {
   Textured2 = 0x00000080,
   Native = 0x01000000,
   NativeInstance = 0x02000000,
-  SectorsOverlap = 0x40000000
+  SectorsOverlap = 0x40000000,
 }

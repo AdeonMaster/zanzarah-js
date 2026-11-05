@@ -1,6 +1,6 @@
-import type { ZBinaryReader } from "../../utils/ZBinaryReader.ts";
-import type { ZBinaryWriter } from "../../utils/ZBinaryWriter.ts";
-import { Vector3 } from "../math/Vector3.ts";
+import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
+import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
+import { Vector3 } from '../math/Vector3.ts'
 
 // https://github.com/Helco/zzio/blob/master/zzio/effect/EffectCombiner.cs
 export class EffectCombiner {
@@ -12,20 +12,23 @@ export class EffectCombiner {
   parts: any[] = []
 
   write(handler: ZBinaryWriter) {
-    throw new Error("EffectCombiner.write: Not implemented yet")
+    throw new Error('EffectCombiner.write: Not implemented yet')
   }
 
   static read(handler: ZBinaryReader) {
     const magicSection = handler.readZString()
-    if (magicSection != '[Effect Combiner]') throw new Error("EffectCombiner.read: File does not start with correct tag")
-    
+    if (magicSection !== '[Effect Combiner]')
+      throw new Error(
+        'EffectCombiner.read: File does not start with correct tag',
+      )
+
     const instance = new this()
 
     let shouldParse = true
-    while(shouldParse) {
+    while (shouldParse) {
       const sectionName = handler.readZString()
 
-      switch(sectionName) {
+      switch (sectionName) {
         case '[EOF]':
           shouldParse = false
           break
@@ -45,7 +48,9 @@ export class EffectCombiner {
           instance.position = handler.readVector3()
           break
         default:
-          throw new Error(`EffectCombiner: Invalid section name: "${sectionName}"`)
+          throw new Error(
+            `EffectCombiner: Invalid section name: "${sectionName}"`,
+          )
       }
     }
 

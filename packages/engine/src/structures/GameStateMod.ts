@@ -9,7 +9,7 @@ export enum GameStateModType {
   DisableTrigger,
   RemoveModel,
   SetTrigger,
-  SetNPCModifier
+  SetNPCModifier,
 }
 
 export class GSModDisableAttackTrigger {

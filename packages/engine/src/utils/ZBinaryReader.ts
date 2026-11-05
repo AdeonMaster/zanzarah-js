@@ -25,7 +25,7 @@ export class ZBinaryReader extends BinaryReader {
 
     return new Vector3(x, y, z)
   }
-  
+
   readQuaternion() {
     const x = this.readFloat()
     const y = this.readFloat()

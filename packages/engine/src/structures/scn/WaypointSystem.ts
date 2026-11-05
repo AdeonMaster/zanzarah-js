@@ -47,7 +47,7 @@ export class WaypointSystem {
       handler.writeInt32(this.compatibleGroups.size)
       for (const [groupId, wpIds] of this.compatibleGroups) {
         handler.writeUInt32(groupId)
-        for(let i = 0; i < wpIds.length; ++i) {
+        for (let i = 0; i < wpIds.length; ++i) {
           handler.writeInt32(wpIds[i])
         }
       }
@@ -55,7 +55,7 @@ export class WaypointSystem {
     if (this.version >= 3) {
       for (let i = 0; i < this.waypoints.length; ++i) {
         handler.writeInt32(this.waypoints[i].visibleIds.length)
-        for(let j = 0; j < this.waypoints[i].visibleIds.length; ++j) {
+        for (let j = 0; j < this.waypoints[i].visibleIds.length; ++j) {
           handler.writeInt32(this.waypoints[i].visibleIds[j])
         }
       }
@@ -87,13 +87,13 @@ export class WaypointSystem {
 
       const walkableIdsLen = handler.readInt32()
       instance.waypoints[i].walkableIds = new Array(walkableIdsLen)
-      for(let j = 0; j < walkableIdsLen; ++j) {
+      for (let j = 0; j < walkableIdsLen; ++j) {
         instance.waypoints[i].walkableIds[j] = handler.readInt32()
       }
 
       const jumpableIdsLen = handler.readInt32()
       instance.waypoints[i].jumpableIds = new Array(jumpableIdsLen)
-      for(let j = 0; j < jumpableIdsLen; ++j) {
+      for (let j = 0; j < jumpableIdsLen; ++j) {
         instance.waypoints[i].jumpableIds[j] = handler.readInt32()
       }
     }
@@ -104,7 +104,7 @@ export class WaypointSystem {
         const key = handler.readUInt32()
         const size = handler.readInt32()
         const items = new Array(size)
-        for(let j = 0; j < size; ++j) {
+        for (let j = 0; j < size; ++j) {
           items[j] = handler.readInt32()
         }
         instance.compatibleGroups.set(key, items)
@@ -115,7 +115,7 @@ export class WaypointSystem {
       for (let i = 0; i < count1; ++i) {
         const size = handler.readInt32()
         instance.waypoints[i].visibleIds = new Array(size)
-        for(let j = 0; j < size; ++j) {
+        for (let j = 0; j < size; ++j) {
           instance.waypoints[i].visibleIds[j] = handler.readInt32()
         }
       }
