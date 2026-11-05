@@ -1,3 +1,4 @@
+import type { UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
@@ -29,13 +30,13 @@ export enum SceneEffectOrder {
 export class SceneEffect {
   readVersion: SceneEffectReadVersion
 
-  idx: number
+  idx: UInt32
   type: SceneEffectType
   pos: Vector3
   end: Vector3
   dir: Vector3
   up: Vector3
-  param: number
+  param: UInt32
   effectFile: string
   order: SceneEffectOrder
 

@@ -1,3 +1,4 @@
+import type { Float, UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { FColor } from '../FColor.ts'
@@ -18,13 +19,13 @@ export enum LightFlags {
 }
 
 export class Light {
-  idx: number = 0
+  idx: UInt32 = 0
   type: LightType = LightType.Unknown
   color: FColor = new FColor()
   flags: LightFlags = LightFlags.LightAtomics
   pos: Vector3 = new Vector3()
   vec: Vector3 = new Vector3()
-  radius: number = 0.0
+  radius: Float = 0.0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)

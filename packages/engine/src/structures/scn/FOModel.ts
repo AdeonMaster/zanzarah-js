@@ -1,3 +1,4 @@
+import type { Float, Int32, UInt32, UInt8 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { IColor } from '../IColor.ts'
@@ -22,19 +23,19 @@ export const FOModelRenderType = {
 }
 
 export class FOModel {
-  idx: number = 0
+  idx: UInt32 = 0
   filename: string = ''
   pos: Vector3 = new Vector3()
   rot: Vector3 = new Vector3()
-  fadeOutMin: number = 0.0
-  fadeOutMax: number = 0.0
+  fadeOutMin: Float = 0.0
+  fadeOutMax: Float = 0.0
   surfaceProps: SurfaceProperties = new SurfaceProperties()
   color: IColor = new IColor()
-  worldDetailLevel: number = 0
-  unused: number = 0
-  renderType: number = 0
+  worldDetailLevel: UInt8 = 0
+  unused: UInt8 = 0
+  renderType: Int32 = 0
   useCachedModels: boolean = false
-  wiggleAmpl: number = 0
+  wiggleAmpl: Int32 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)

@@ -1,16 +1,17 @@
+import type { UInt32, UInt8 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { IColor } from '../IColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class VertexModifier {
-  idx: number = 0
-  type: number = 0
+  idx: UInt32 = 0
+  type: UInt32 = 0
   v: Vector3 = new Vector3()
   color: IColor = new IColor()
   vv: Vector3 = new Vector3()
-  ii: number = 0
-  c: number = 0
+  ii: UInt32 = 0
+  c: UInt8 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)

@@ -1,3 +1,4 @@
+import type { UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
@@ -12,7 +13,7 @@ export class Waypoint {
 }
 
 export class WaypointSystem {
-  version: number = 0
+  version: UInt32 = 0
   data: Buffer = Buffer.from(Array(0x18).fill(0))
   waypoints: Waypoint[] = []
   compatibleGroups: Map<number, number[]> = new Map<number, number[]>()

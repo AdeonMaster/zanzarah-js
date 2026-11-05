@@ -1,9 +1,10 @@
+import type { Int32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class Cell {
-  type: number = 0
-  columnIndex: number = 0
+  type: Int32 = 0
+  columnIndex: Int32 = 0
   value: any = null
 
   write(handler: ZBinaryWriter) {

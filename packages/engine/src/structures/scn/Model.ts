@@ -1,3 +1,4 @@
+import type { Int32, UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { IColor } from '../IColor.ts'
@@ -5,14 +6,14 @@ import { Vector3 } from '../math/Vector3.ts'
 import { SurfaceProperties } from '../SurfaceProperties.ts'
 
 export class Model {
-  idx: number = 0
+  idx: UInt32 = 0
   filename: string = ''
   pos: Vector3 = new Vector3()
   rot: Vector3 = new Vector3()
   surfaceProps: SurfaceProperties = new SurfaceProperties()
   color: IColor = new IColor()
   useCachedModels: boolean = false
-  wiggleAmpl: number = 0
+  wiggleAmpl: Int32 = 0
   isVisualOnly: boolean = false
 
   write(handler: ZBinaryWriter) {

@@ -1,3 +1,4 @@
+import type { Int32, UInt16, UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
@@ -10,13 +11,13 @@ export enum SceneType {
 }
 
 export class Dataset {
-  sceneId: number = 0
-  sceneType: number = 0
-  nameUID: number = 0
-  unk1: number = 0
+  sceneId: UInt32 = 0
+  sceneType: Int32 = 0
+  nameUID: UInt32 = 0
+  unk1: UInt16 = 0
   isInterior: boolean = false
   canChangeDeck: boolean = false
-  unk4: number = 0
+  unk4: UInt32 = 0
   isHotScene: boolean = false
   unk6: boolean = false
   s1: string = ''

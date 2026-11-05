@@ -1,3 +1,4 @@
+import type { Float, UInt8 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { FColor } from '../FColor.ts'
@@ -12,11 +13,11 @@ export class Misc {
   v1: Vector3 = new Vector3()
   v2: Vector3 = new Vector3()
   clearColor: IColor = new IColor()
-  fogType: number = 0
+  fogType: UInt8 = 0
   fogColor: IColor = new IColor()
-  fogDistance: number = 0.0
-  fogDensity: number = 0.0
-  farClip: number = 0.0
+  fogDistance: Float = 0.0
+  fogDensity: Float = 0.0
+  farClip: Float = 0.0
 
   write(handler: ZBinaryWriter) {
     handler.writeZString(this.worldFile)

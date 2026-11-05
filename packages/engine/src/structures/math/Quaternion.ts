@@ -1,10 +1,12 @@
-export class Quaternion {
-  x: number
-  y: number
-  z: number
-  w: number
+import type { Float } from "../../types.ts"
 
-  constructor(x: number = 0.0, y: number = 0.0, z: number = 0.0, w: number = 0.0) {
+export class Quaternion {
+  x: Float
+  y: Float
+  z: Float
+  w: Float
+
+  constructor(x: Float = 0.0, y: Float = 0.0, z: Float = 0.0, w: Float = 0.0) {
     this.x = x
     this.y = y
     this.z = z

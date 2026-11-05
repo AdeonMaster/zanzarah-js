@@ -1,11 +1,12 @@
 // https://github.com/Helco/zzio/blob/master/zzio/ActorExDescription.cs
+import type { Int32 } from '../types.ts'
 import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class ActorPartDescription {
   model: string = ''
-  animationPoolID: number = -1
-  animations: [number, string][] = []
+  animationPoolID: Int32 = -1
+  animations: [Int32, string][] = []
 
   write(handler: ZBinaryWriter, partName: string) {
     handler.writeZString(`[ModelFilename_${partName}]`)
@@ -23,9 +24,9 @@ export class ActorPartDescription {
 export class ActorExDescription {
   body: ActorPartDescription = new ActorPartDescription()
   wings: ActorPartDescription = new ActorPartDescription()
-  attachWingsToBone: number = -1
-  headBoneID: number = -1
-  effectBoneID: number = -1
+  attachWingsToBone: Int32 = -1
+  headBoneID: Int32 = -1
+  effectBoneID: Int32 = -1
 
   write(handler: ZBinaryWriter) {
     handler.writeZString("[ActorExDescriptionFile]")
@@ -51,8 +52,8 @@ export class ActorExDescription {
         'ActorExDescription.read: Not an actorex description file',
       )
 
-    const bodyAnimations: [number, string][] = []
-    const wingsAnimations: [number, string][] = []
+    const bodyAnimations: [Int32, string][] = []
+    const wingsAnimations: [Int32, string][] = []
 
     let stopParsing = false
     while (!stopParsing) {

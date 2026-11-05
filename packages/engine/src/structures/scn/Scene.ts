@@ -1,3 +1,4 @@
+import type { UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
@@ -57,8 +58,8 @@ export class Scene {
   samples3D: Sample3D[] = []
   samples2D: Sample2D[] = []
   backdropFile: string = ''
-  ambientSound: number = 0
-  music: number = 0
+  ambientSound: UInt32 = 0
+  music: UInt32 = 0
   effects: SceneEffect[] = []
   sceneItems: SceneItem[] = []
   vertexModifiers: VertexModifier[] = []

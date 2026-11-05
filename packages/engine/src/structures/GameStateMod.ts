@@ -1,3 +1,4 @@
+import type { UInt32 } from '../types.ts'
 import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
@@ -13,9 +14,9 @@ export enum GameStateModType {
 
 export class GSModDisableAttackTrigger {
   type: GameStateModType = GameStateModType.DisableAttackTrigger
-  triggerId: number = 0
+  triggerId: UInt32 = 0
 
-  constructor(triggerId: number) {
+  constructor(triggerId: UInt32) {
     this.triggerId = triggerId
   }
 
@@ -31,14 +32,14 @@ export class GSModDisableAttackTrigger {
 
 export class GSModRemoveItem {
   type: GameStateModType = GameStateModType.RemoveItem
-  modelId: number = 0
+  modelId: UInt32 = 0
 
   write(handle: ZBinaryWriter) {
     handle.writeInt32(this.type)
     handle.writeUInt32(this.modelId)
   }
 
-  constructor(modelId: number) {
+  constructor(modelId: UInt32) {
     this.modelId = modelId
   }
 
@@ -49,10 +50,10 @@ export class GSModRemoveItem {
 
 export class GSModChangeNPCState {
   type: GameStateModType = GameStateModType.ChangeNPCState
-  triggerId: number = 0
-  uid: number = 0
+  triggerId: UInt32 = 0
+  uid: UInt32 = 0
 
-  constructor(triggerId: number, uid: number) {
+  constructor(triggerId: UInt32, uid: UInt32) {
     this.triggerId = triggerId
     this.uid = uid
   }
@@ -73,9 +74,9 @@ export class GSModChangeNPCState {
 
 export class GSModDisableTrigger {
   type: GameStateModType = GameStateModType.DisableTrigger
-  triggerId: number = 0
+  triggerId: UInt32 = 0
 
-  constructor(triggerId: number) {
+  constructor(triggerId: UInt32) {
     this.triggerId = triggerId
   }
 
@@ -91,9 +92,9 @@ export class GSModDisableTrigger {
 
 export class GSModRemoveModel {
   type: GameStateModType = GameStateModType.RemoveModel
-  modelId: number = 0
+  modelId: UInt32 = 0
 
-  constructor(modelId: number) {
+  constructor(modelId: UInt32) {
     this.modelId = modelId
   }
 
@@ -109,18 +110,18 @@ export class GSModRemoveModel {
 
 export class GSModSetTrigger {
   type: GameStateModType = GameStateModType.SetTrigger
-  triggerId: number
-  ii1: number
-  ii2: number
-  ii3: number
-  ii4: number
+  triggerId: UInt32
+  ii1: UInt32
+  ii2: UInt32
+  ii3: UInt32
+  ii4: UInt32
 
   constructor(
-    triggerId: number,
-    ii1: number,
-    ii2: number,
-    ii3: number,
-    ii4: number,
+    triggerId: UInt32,
+    ii1: UInt32,
+    ii2: UInt32,
+    ii3: UInt32,
+    ii4: UInt32,
   ) {
     this.triggerId = triggerId
     this.ii1 = ii1
@@ -151,10 +152,10 @@ export class GSModSetTrigger {
 
 export class GSModSetNPCModifier {
   type: GameStateModType = GameStateModType.SetNPCModifier
-  triggerId: number = 0
-  value: number = 0
+  triggerId: UInt32 = 0
+  value: UInt32 = 0
 
-  constructor(triggerId: number, value: number) {
+  constructor(triggerId: UInt32, value: UInt32) {
     this.triggerId = triggerId
     this.value = value
   }

@@ -1,3 +1,4 @@
+import type { Float } from '../types.ts'
 import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 import { Quaternion } from './math/Quaternion.ts'
@@ -6,7 +7,7 @@ import { Vector3 } from './math/Vector3.ts'
 export class AnimationKeyFrame {
   rot: Quaternion = new Quaternion()
   pos: Vector3 = new Vector3()
-  time: number = 0
+  time: Float = 0
   parentFrameOffset: number = 0 //TODO: should be read/written?
 
   static ExpectedSize = (4 + 3 + 1 + 1) * 4

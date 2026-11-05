@@ -1,11 +1,12 @@
+import type { Float } from "../types.ts";
 import type { ZBinaryReader } from "../utils/ZBinaryReader.ts";
 import type { ZBinaryWriter } from "../utils/ZBinaryWriter.ts";
 
 export class ConfigValue {
-  float: number = 0
+  float: Float = 0
   string: string = ''
 
-  constructor(float: number, string: string) {
+  constructor(float: Float, string: string) {
     this.float = float
     this.string = string
   }
@@ -34,7 +35,7 @@ export class ConfigValue {
 export class Config {
   expectedChecksum: Buffer = Buffer.alloc(0)
   header: Buffer = Buffer.alloc(0)
-  firstValue: ConfigValue = new ConfigValue(0, '')
+  firstValue: ConfigValue = new ConfigValue(0.0, '')
   variables: Map<string, ConfigValue> = new Map<string, ConfigValue>()
 
   static XOR_KEY = 0x75

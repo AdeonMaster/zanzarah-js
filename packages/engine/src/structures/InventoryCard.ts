@@ -1,11 +1,12 @@
+import type { UInt32 } from '../types.ts'
 import type { BinaryReader } from '../utils/BinaryReader.ts'
 import type { BinaryWriter } from '../utils/BinaryWriter.ts'
 
 export class InventoryCard {
-  cardId: number = 0
-  atIndex: number = 0
-  dbId: number = 0
-  amount: number = 0
+  cardId: UInt32 = 0
+  atIndex: UInt32 = 0
+  dbId: UInt32 = 0
+  amount: UInt32 = 0
   isInUse: boolean = false
 
   write(handler: BinaryWriter) {

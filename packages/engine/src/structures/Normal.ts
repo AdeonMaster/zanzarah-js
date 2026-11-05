@@ -1,11 +1,12 @@
+import type { Int8, UInt8 } from "../types.ts"
 import type { ZBinaryReader } from "../utils/ZBinaryReader.ts"
 import type { ZBinaryWriter } from "../utils/ZBinaryWriter.ts"
 
 export class Normal {
-  x: number = 0
-  y: number = 0
-  z: number = 0
-  p: number = 0
+  x: UInt8 = 0
+  y: UInt8 = 0
+  z: UInt8 = 0
+  p: Int8 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt8(this.x)

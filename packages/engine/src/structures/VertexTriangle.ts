@@ -1,11 +1,12 @@
+import type { UInt16 } from "../types.ts"
 import type { ZBinaryReader } from "../utils/ZBinaryReader.ts"
 import type { ZBinaryWriter } from "../utils/ZBinaryWriter.ts"
 
 export class VertexTriangle {
-  m: number = 0
-  v1: number = 0
-  v2: number = 0
-  v3: number = 0
+  m: UInt16 = 0
+  v1: UInt16 = 0
+  v2: UInt16 = 0
+  v3: UInt16 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt16(this.m)

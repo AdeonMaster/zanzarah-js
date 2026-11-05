@@ -1,18 +1,19 @@
+import type { Float, UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class Sample3D {
-  idx: number = 0
+  idx: UInt32 = 0
   filename: string = ''
   pos: Vector3 = new Vector3()
   forward: Vector3 = new Vector3()
   up: Vector3 = new Vector3()
-  minDist: number = 0.0
-  maxDist: number = 0.0
-  volume: number = 0
-  loopCount: number = 0
-  falloff: number = 0
+  minDist: Float = 0.0
+  maxDist: Float = 0.0
+  volume: UInt32 = 0
+  loopCount: UInt32 = 0
+  falloff: UInt32 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)

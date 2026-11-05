@@ -1,3 +1,4 @@
+import type { Int32, UInt32 } from '../types.ts'
 import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 import {
@@ -16,10 +17,10 @@ import { Version } from './Version.ts'
 export class Savegame {
   version: Version = new Version()
   name: string = ''
-  secondsPlayed: number = 0
-  progress: number = 0
-  sceneId: number = 0
-  entryId: number = 0
+  secondsPlayed: Int32 = 0
+  progress: Int32 = 0
+  sceneId: Int32 = 0
+  entryId: Int32 = 0
   scenes: {
     name: string
     mods: (
@@ -33,10 +34,10 @@ export class Savegame {
     )[]
   }[] = []
   items: InventoryCard[] = []
-  pixiesHolding: number = 0
-  pixiesCatched: number = 0
-  globalVars: [number, number][] = new Array(49).fill([0, 0]) //TODO: probably should be read from .fbs?
-  switchGameMinMoves: number = 9999
+  pixiesHolding: UInt32 = 0
+  pixiesCatched: UInt32 = 0
+  globalVars: [UInt32, UInt32][] = new Array(49).fill([0, 0]) //TODO: probably should be read from .fbs?
+  switchGameMinMoves: UInt32 = 9999
 
   write(handler: ZBinaryWriter) {
     this.version.write(handler)

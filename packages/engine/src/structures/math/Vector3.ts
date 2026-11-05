@@ -1,9 +1,11 @@
-export class Vector3 {
-  x: number
-  y: number
-  z: number
+import type { Float } from "../../types.ts"
 
-  constructor(x: number = 0.0, y: number = 0.0, z: number = 0.0) {
+export class Vector3 {
+  x: Float
+  y: Float
+  z: Float
+
+  constructor(x: Float = 0.0, y: Float = 0.0, z: Float = 0.0) {
     this.x = x
     this.y = y
     this.z = z

@@ -1,9 +1,10 @@
+import type { UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Cell } from './Cell.ts'
 
 export class Row {
-  uid: number = 0
+  uid: UInt32 = 0
   cells: Cell[] = []
 
   write(handler: ZBinaryWriter) {

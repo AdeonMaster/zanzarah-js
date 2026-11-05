@@ -1,16 +1,17 @@
+import type { Int32, UInt32 } from '../types.ts'
 import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class Version {
   author: string = ''
-  buildCountry: number = 0
-  buildType: number = 0
-  unk1: number = 0
-  buildVersion: number = 0
+  buildCountry: Int32 = 0
+  buildType: Int32 = 0
+  unk1: UInt32 = 0
+  buildVersion: UInt32 = 0
   date: string = ''
   time: string = ''
-  year: number = 0
-  unk2: number = 0
+  year: UInt32 = 0
+  unk2: UInt32 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeZString(this.author)

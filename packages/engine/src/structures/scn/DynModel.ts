@@ -1,34 +1,35 @@
+import type { Float, UInt32, UInt8 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { IColor } from '../IColor.ts'
 import { Vector3 } from '../math/Vector3.ts'
 
 export class DynModelData {
-  a1: number = 0.0
-  a2: number = 0.0
-  a3: number = 0.0
-  a4: number = 0.0
-  a5: number = 0.0
-  a6: number = 0.0
-  a7: number = 0.0
-  someFlag: number = 0
+  a1: Float = 0.0
+  a2: Float = 0.0
+  a3: Float = 0.0
+  a4: Float = 0.0
+  a5: Float = 0.0
+  a6: Float = 0.0
+  a7: Float = 0.0
+  someFlag: UInt8 = 0
   someColor: IColor = new IColor()
-  cc: number = 0
+  cc: UInt32 = 0
   s1: string = ''
   s2: string = ''
 }
 
 export class DynModel {
-  idx: number = 0
-  c1: number = 0
-  c2: number = 0
+  idx: UInt32 = 0
+  c1: UInt32 = 0
+  c2: UInt32 = 0
   pos: Vector3 = new Vector3()
   rot: Vector3 = new Vector3()
-  f1: number = 0.0
-  f2: number = 0.0
+  f1: Float = 0.0
+  f2: Float = 0.0
   v1: Vector3 = new Vector3()
-  ii1: number = 0
-  ii2: number = 0
+  ii1: UInt32 = 0
+  ii2: UInt32 = 0
   data: DynModelData[] = []
 
   write(handler: ZBinaryWriter) {

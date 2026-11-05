@@ -1,12 +1,13 @@
+import type { UInt32, UInt8 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class Sample2D {
-  idx: number = 0
+  idx: UInt32 = 0
   filename: string = ''
-  volume: number = 0
-  loopCount: number = 0
-  c: number = 0
+  volume: UInt32 = 0
+  loopCount: UInt32 = 0
+  c: UInt8 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)

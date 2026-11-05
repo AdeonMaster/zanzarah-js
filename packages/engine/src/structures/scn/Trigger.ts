@@ -1,3 +1,4 @@
+import type { Float, Int32, UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 import { Vector3 } from '../math/Vector3.ts'
@@ -11,19 +12,19 @@ export enum TriggerColliderType {
 }
 
 export class Trigger {
-  idx: number = 0
+  idx: UInt32 = 0
   requiresLooking: boolean = false
   colliderType: TriggerColliderType = TriggerColliderType.Unknown
   dir: Vector3 = new Vector3()
-  type: number = 0
-  ii1: number = 0
-  ii2: number = 0
-  ii3: number = 0
-  ii4: number = 0
+  type: Int32 = 0
+  ii1: UInt32 = 0
+  ii2: UInt32 = 0
+  ii3: UInt32 = 0
+  ii4: UInt32 = 0
   s: string = ''
   pos: Vector3 = new Vector3()
   end: Vector3 = new Vector3()
-  radius: number = 0.0
+  radius: Float = 0.0
 
   write(handler: ZBinaryWriter) {
     handler.writeUInt32(this.idx)

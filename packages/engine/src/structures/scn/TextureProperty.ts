@@ -1,9 +1,10 @@
+import type { Int32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class TextureProperty {
   fileName: string = ''
-  footstepType: number = 0
+  footstepType: Int32 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeZString(this.fileName)

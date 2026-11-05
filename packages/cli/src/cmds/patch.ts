@@ -53,6 +53,6 @@ const patchCommand = {
     fs.writeFileSync(outputPath, outBuffer)
     console.log('Done!')
   },
-} satisfies CommandModule<{}, PatchArgs>
+} satisfies CommandModule<unknown, PatchArgs>
 
 export default patchCommand

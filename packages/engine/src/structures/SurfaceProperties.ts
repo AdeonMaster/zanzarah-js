@@ -1,10 +1,11 @@
+import type { Float } from '../types.ts'
 import type { ZBinaryReader } from '../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../utils/ZBinaryWriter.ts'
 
 export class SurfaceProperties {
-  ambient: number
-  specular: number
-  diffuse: number
+  ambient: Float
+  specular: Float
+  diffuse: Float
 
   constructor() {
     this.ambient = 0.0

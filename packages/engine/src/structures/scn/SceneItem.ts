@@ -1,10 +1,11 @@
+import type { UInt32 } from '../../types.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
 
 export class SceneItem {
   name: string = ''
-  index: number = 0
-  type: number = 0
+  index: UInt32 = 0
+  type: UInt32 = 0
 
   write(handler: ZBinaryWriter) {
     handler.writeZString(this.name)

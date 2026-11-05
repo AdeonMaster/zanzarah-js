@@ -16,7 +16,6 @@ const loadedTextures = new Map<string, THREE.Texture>()
 const loadScene = async (
   scene: THREE.Scene,
   ambientLight: THREE.AmbientLight,
-  renderer: THREE.WebGLRenderer,
   scn: Scene,
 ) => {
   console.log(scn)
@@ -285,7 +284,7 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
 
   let frameId = 0
 
-  await loadScene(scene, ambientLight, renderer, scn)
+  await loadScene(scene, ambientLight, scn)
 
   const animate = (timestamp: number) => {
     frameId = requestAnimationFrame(animate)
