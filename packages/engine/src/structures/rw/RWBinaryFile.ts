@@ -2,6 +2,7 @@ import { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { RWHeader } from './RWHeader.ts'
 import type { RWSection } from './RWSection.ts'
 import { SectionId } from './SectionID.ts'
+import { RWAtomic, RWAtomicStruct } from './sections/RWAtomic.ts'
 import {
   RWAtomicSection,
   RWAtomicSectionStruct,
@@ -38,7 +39,7 @@ const CHUNK_CLASSES = new Map<number, ChunkCtor>([
   [SectionId.FrameList, RWFrameList],
   [SectionId.Geometry, RWGeometry],
   [SectionId.Clump, RWClump],
-  [SectionId.Atomic, RWAtomicSection],
+  [SectionId.Atomic, RWAtomic],
   [SectionId.TextureDictionary, RWTextureDictionary],
   [SectionId.GeometryList, RWGeometryList],
   [SectionId.World, RWWorld],
@@ -55,6 +56,7 @@ const STRUCT_CLASSES = new Map<number, ChunkCtor>([
   [SectionId.Material, RWMaterialStruct],
   [SectionId.Texture, RWTextureStruct],
   [SectionId.PlaneSection, RWPlaneSectionStruct],
+  [SectionId.Atomic, RWAtomicStruct],
   [SectionId.AtomicSection, RWAtomicSectionStruct],
 ])
 

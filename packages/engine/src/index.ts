@@ -29,7 +29,7 @@ export { ZBinaryWriter } from './utils/ZBinaryWriter.ts'
 // const table = Table.read(reader2)
 // console.log(table.rows.length)
 
-const pathToFile = `..\\..\\dump\\RESOURCES\\WORLDS\\DUMMY.BSP`
+const pathToFile = `..\\..\\examples\\RESOURCES\\WORLDS\\DUMMY.BSP`
 const buffer = fs.readFileSync(pathToFile)
 const reader = new ZBinaryReader(buffer)
 const bsp = RWBinaryFile.read(reader)

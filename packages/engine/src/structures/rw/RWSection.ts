@@ -1,3 +1,4 @@
+import type { ZBinaryWriter } from '../../index.ts'
 import type { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
 import type { RWHeader } from './RWHeader.ts'
 import { SectionId } from './SectionID.ts'
@@ -39,6 +40,8 @@ export abstract class RWSection {
   get isContainer(): boolean {
     return false
   }
+
+  write(_writer: ZBinaryWriter): void {}
 
   /** Parse this chunk's payload. Only called for non-container chunks. */
   read(_reader: ZBinaryReader): void {}
