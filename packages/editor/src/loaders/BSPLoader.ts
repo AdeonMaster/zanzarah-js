@@ -1,165 +1,301 @@
-mport { THREE } from 'aframe/src';
-import debug from 'debug';
-import jBinary from 'jbinary';
+﻿import {
+  RWAtomicSection,
+  RWBinaryFile,
+  RWMaterial,
+  RWMaterialList,
+  RWString,
+  RWTexture,
+  RWWorld,
+  ZBinaryReader,
+} from '@zanzarah.js/engine/rw'
+import { Buffer } from 'buffer'
+import * as THREE from 'three'
 
-import { typeSet } from 'parsers/renderware';
-import './RenderwareLoader';
+const COLOR_MULTIPLIER = 2
 
-const verbose = debug('app:three:BSPLoader:verbose');
-const error = debug('app:three:BSPLoader:error');
+interface ColorData {
+  r: number
+  g: number
+  b: number
+}
 
-const ColorMultiplier = 2;
+export class BSPLoader extends THREE.Loader<THREE.Group, string> {
+  load(
+    url: string,
+    onLoad: (group: THREE.Group) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (error: unknown) => void,
+  ): void {
+    const fileLoader = new THREE.FileLoader(this.manager)
+      .setPath(this.path)
+      .setResponseType('arraybuffer')
+      .setWithCredentials(this.withCredentials)
+      .setRequestHeader(this.requestHeader)
 
-THREE.BSPLoader = class BSPLoader extends THREE.RenderwareLoader {
-  constructor(manager) {
-    super();
-    this.manager = manager || THREE.DefaultLoadingManager;
-    this.materials = null;
-  }
-
-  load(url, onLoad, onProgress, onError) {
-    verbose('Loading data %s', url);
-    this._url = url;
-    const loader = new THREE.FileLoader(this.manager);
-    loader.setPath(this.path);
-    loader.setResponseType('blob');
-    loader.load(url, blob => {
-      verbose('Loaded data from %s, %d bytes', url, blob.size);
-      jBinary.load(blob, typeSet).then(binary => {
-        onLoad(this.parse(binary.readAll()), this._meta);
-      }).catch(err => {
-        error('Fatal error', err);
-        if (onError) {
-          onError(err);
+    fileLoader.load(
+      url,
+      (data) => {
+        try {
+          const texturePath =
+            this.resourcePath ||
+            this.path ||
+            THREE.LoaderUtils.extractUrlBase(url)
+          onLoad(this.parseBuffer(data as ArrayBuffer, texturePath))
+        } catch (error) {
+          if (onError) {
+            onError(error)
+          } else {
+            console.error('Failed to parse BSP file:', error)
+          }
         }
-      });
-    }, onProgress, onError);
+      },
+      onProgress,
+      onError,
+    )
   }
 
-  setPath(value) {
-    this.path = value;
+  parse(data: ArrayBuffer): THREE.Group {
+    return this.parseBuffer(data, this.resourcePath || this.path)
   }
 
-  _parseGeometry(data) {
-    const geometry = new THREE.Geometry();
+  private parseBuffer(data: ArrayBuffer, texturePath: string): THREE.Group {
+    const sections = RWBinaryFile.read(new ZBinaryReader(Buffer.from(data)))
+    const world = sections.find(
+      (section): section is RWWorld => section instanceof RWWorld,
+    )
 
-    const { vertices } = data;
-    for (const [ x, y, z ] of vertices) {
-      geometry.vertices.push(new THREE.Vector3(x, y, z));
+    if (!world) {
+      throw new Error('No RenderWare world found in BSP data')
     }
 
-    const { indices, colors } = data;
-    for (const [ materialIndex, a, b, c ] of indices) {
-      const indexes = [a, b, c];
-      const faceColors = colors ? indexes.map(index => {
-        const color = colors[index];
-        return new THREE.Color(parseInt(color, 16) & 0xFFFFFF)
-          .multiplyScalar(ColorMultiplier);
-      }) : null;
-      geometry.faces.push(new THREE.Face3(a, b, c, null, faceColors, materialIndex));
+    const textureLoader = new THREE.TextureLoader(this.manager)
+      .setPath(texturePath)
+      .setCrossOrigin(this.crossOrigin)
+    const materials = this.parseMaterials(
+      world.findChild(RWMaterialList),
+      textureLoader,
+    )
+    const group = new THREE.Group()
+
+    if (world.struct) {
+      const { x, y, z } = world.struct.origin
+      group.userData.worldOrigin = { x, y, z }
     }
 
-    const { textureCoords } = data;
-    const uvLayer = geometry.faceVertexUvs[0] = [];
-    // eslint-disable-next-line no-unused-vars
-    for (const [ _, a, b, c ] of indices) {
-      const uvs = [a, b, c].map(index => {
-        const [ u, v ] = textureCoords[index];
-        return new THREE.Vector2(u, 1 - v);
-      });
-      uvLayer.push(uvs);
+    for (const sector of world.findAll(RWAtomicSection)) {
+      const geometry = this.parseGeometry(sector, materials.length)
+      if (!geometry) continue
+
+      group.add(new THREE.Mesh(geometry, materials))
     }
 
-    geometry.dynamic = false;
-    geometry.computeFaceNormals();
-    geometry.computeBoundingSphere();
-    return new THREE.BufferGeometry()
-      .fromGeometry(geometry);
+    if (group.children.length === 0) {
+      throw new Error('No geometry found in BSP data')
+    }
+
+    return group
   }
 
-  _parseMaterial(section) {
-    const { textureCount } = this._getData(section);
-    if (textureCount > 1) {
-      throw new Error('Not supporting materials with more than one texture set');
+  private parseMaterials(
+    materialList: RWMaterialList | null,
+    textureLoader: THREE.TextureLoader,
+  ): THREE.MeshBasicMaterial[] {
+    const fallbackMaterial = () =>
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        vertexColors: true,
+      })
+
+    if (!materialList) return [fallbackMaterial()]
+
+    const definitions = materialList.children.filter(
+      (section): section is RWMaterial => section instanceof RWMaterial,
+    )
+    const materialIndices = materialList.struct?.materialIndices
+
+    if (!materialIndices?.length) {
+      return definitions.length
+        ? definitions.map((section) =>
+            this.parseMaterial(section, textureLoader),
+          )
+        : [fallbackMaterial()]
     }
+
+    const materials: THREE.MeshBasicMaterial[] = []
+    let nextDefinition = 0
+
+    for (const materialIndex of materialIndices) {
+      if (materialIndex === -1) {
+        const section = definitions[nextDefinition]
+        nextDefinition += 1
+        materials.push(
+          section
+            ? this.parseMaterial(section, textureLoader)
+            : fallbackMaterial(),
+        )
+        continue
+      }
+
+      materials.push(materials[materialIndex] ?? fallbackMaterial())
+    }
+
+    return materials.length ? materials : [fallbackMaterial()]
+  }
+
+  private parseMaterial(
+    section: RWMaterial,
+    textureLoader: THREE.TextureLoader,
+  ): THREE.MeshBasicMaterial {
+    const colorData = section.struct?.color
     const material = new THREE.MeshBasicMaterial({
-      vertexColors: THREE.VertexColors,
-    });
-    if (!textureCount) {
-      return material;
+      color: colorData ? this.toThreeColor(colorData) : 0xffffff,
+      vertexColors: true,
+    })
+    const textureSection = section.findChild(RWTexture)
+    if (!textureSection) return material
+
+    const [colorName, alphaName] = textureSection
+      .findChildren(RWString)
+      .map((string) => string.value.trim())
+    if (colorName) {
+      material.map = this.loadTexture(colorName, textureLoader, true)
     }
-    // The first child is data section
-    const textureChild = section.children[1];
-    const [ colorFile, alphaFile ] = textureChild.children.filter(child => (
-      child.type === 'RwString'
-    )).map(child => (
-      child.data
-    ));
-    const loader = new THREE.TextureLoader();
-    loader.setPath(this.path);
-    if (colorFile) {
-      this._resolveTexturePath(this._url, `${colorFile.toUpperCase()}.BMP`).then(texturePath => {
-        verbose('Loading color texture', colorFile, texturePath);
-        material.map = loader.load(texturePath, () => {
-          material.needsUpdate = true;
-        });
-        material.map.wrapS = THREE.RepeatWrapping;
-        material.map.wrapT = THREE.RepeatWrapping;
-      });
-    }
-    if (alphaFile) {
-      this._resolveTexturePath(this._url, `${alphaFile.toUpperCase()}.BMP`).then(texturePath => {
-        verbose('Resolved texture path', alphaFile, texturePath);
-        material.alphaMap = loader.load(texturePath, () => {
-          material.needsUpdate = true;
-        });
-        material.alphaMap.wrapS = THREE.RepeatWrapping;
-        material.alphaMap.wrapT = THREE.RepeatWrapping;
-        material.transparent = true;
-        material.alphaTest = 0.05;
-      });
-    }
-    return material;
-  }
-
-  _handleRwMaterialList(section) {
-    const { count } = this._getData(section);
-    verbose('Found %d materials', count);
-    this._materials = section.children.slice(1).map(child => (
-      this._parseMaterial(child)
-    ));
-    return true;
-  }
-
-  _handleRwWorld(section) {
-    const { invWorldOrigin, flags } = this._getData(section);
-    verbose('Found world section', flags);
-    this._meta = {
-      invertedOrigin: invWorldOrigin,
-    };
-  }
-
-  _handleRwAtomicSector(section) {
-    const data = this._getData(section);
-
-    const { vertices, indices } = data;
-    verbose('Processing sector, %d vertices, %d indices', vertices.length, indices.length);
-
-    const geometry = this._parseGeometry(data);
-    const material = new THREE.MultiMaterial(this._materials);
-    const mesh = new THREE.Mesh(geometry, material);
-    this._group.add(mesh);
-  }
-
-  parse(sections) {
-    this._group = new THREE.Group();
-    this._traverse(sections);
-    if (this._group.children.length === 0) {
-      throw new Error('No geometry found in bsp data');
+    if (alphaName) {
+      material.alphaMap = this.loadTexture(alphaName, textureLoader, false)
+      material.transparent = true
+      material.alphaTest = 0.05
     }
 
-    verbose('Parsed %d groups', this._group.children.length);
+    return material
+  }
 
-    return this._group;
+  private loadTexture(
+    name: string,
+    textureLoader: THREE.TextureLoader,
+    isColor: boolean,
+  ): THREE.Texture {
+    const normalizedName = name.toUpperCase()
+    const filename = /\.[A-Z0-9]+$/.test(normalizedName)
+      ? normalizedName
+      : normalizedName + '.BMP'
+    const texture = textureLoader.load(
+      filename,
+      undefined,
+      undefined,
+      (error) =>
+        console.warn('Failed to load BSP texture ' + filename + ':', error),
+    )
+
+    texture.wrapS = THREE.RepeatWrapping
+    texture.wrapT = THREE.RepeatWrapping
+    if (isColor) texture.colorSpace = THREE.SRGBColorSpace
+
+    return texture
+  }
+
+  private parseGeometry(
+    sector: RWAtomicSection,
+    materialCount: number,
+  ): THREE.BufferGeometry | null {
+    const data = sector.struct
+    if (!data || data.vertices.length === 0 || data.triangles.length === 0) {
+      return null
+    }
+
+    const positions: number[] = []
+    const uvs: number[] = []
+    const colors: number[] = []
+
+    for (
+      let vertexIndex = 0;
+      vertexIndex < data.vertices.length;
+      vertexIndex++
+    ) {
+      const vertex = data.vertices[vertexIndex]
+      positions.push(vertex.x, vertex.y, vertex.z)
+
+      const uv = data.texCoords1?.[vertexIndex]
+      uvs.push(uv?.x ?? 0, uv ? 1 - uv.y : 0)
+
+      const color = data.colors?.[vertexIndex]
+      if (color) {
+        const converted =
+          this.toThreeColor(color).multiplyScalar(COLOR_MULTIPLIER)
+        colors.push(converted.r, converted.g, converted.b)
+      } else {
+        colors.push(1, 1, 1)
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(positions, 3),
+    )
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+
+    const indices: number[] = []
+    let currentMaterialIndex: number | null = null
+    let groupStart = 0
+
+    for (const triangle of data.triangles) {
+      const triangleIndices = [triangle.v1, triangle.v2, triangle.v3]
+      for (const index of triangleIndices) {
+        if (index >= data.vertices.length) {
+          throw new Error(
+            'BSP triangle references vertex ' +
+              index +
+              ', but the sector has ' +
+              data.vertices.length +
+              ' vertices',
+          )
+        }
+      }
+
+      const materialIndex = data.matIdBase + triangle.m
+      const resolvedMaterialIndex =
+        materialIndex >= 0 && materialIndex < materialCount ? materialIndex : 0
+
+      if (currentMaterialIndex !== resolvedMaterialIndex) {
+        if (currentMaterialIndex !== null) {
+          geometry.addGroup(
+            groupStart,
+            indices.length - groupStart,
+            currentMaterialIndex,
+          )
+        }
+        currentMaterialIndex = resolvedMaterialIndex
+        groupStart = indices.length
+      }
+
+      indices.push(...triangleIndices)
+    }
+
+    if (currentMaterialIndex !== null) {
+      geometry.addGroup(
+        groupStart,
+        indices.length - groupStart,
+        currentMaterialIndex,
+      )
+    }
+
+    geometry.setIndex(indices)
+    geometry.computeVertexNormals()
+    geometry.computeBoundingBox()
+    geometry.computeBoundingSphere()
+
+    return geometry
+  }
+
+  private toThreeColor(color: ColorData): THREE.Color {
+    return new THREE.Color().setRGB(
+      color.r / 255,
+      color.g / 255,
+      color.b / 255,
+      THREE.SRGBColorSpace,
+    )
   }
 }
+
+export default BSPLoader

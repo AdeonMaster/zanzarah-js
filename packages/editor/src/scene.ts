@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js'
 import { ViewHelper } from 'three/addons/helpers/ViewHelper.js'
 import { DDSLoader } from 'three/addons/loaders/DDSLoader.js'
+import { BSPLoader } from './loaders/BSPLoader.js'
 
 window.Buffer = Buffer
 
@@ -119,6 +120,10 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
   loadedTextures.set('gizmo:audio', gizmoAudioIcon)
   loadedTextures.set('gizmo:effect', gizmoEffectIcon)
 
+  const bspLoader = new BSPLoader()
+  const bspFile = await bspLoader.loadAsync('SC_0210.BSP') //'SC_0210.BSP'
+  console.log(bspFile)
+
   const fileLoader = new THREE.FileLoader()
   fileLoader.setResponseType('arraybuffer')
 
@@ -161,6 +166,8 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
   const ambientLight = new THREE.AmbientLight(0xffffff, 1)
   scene.add(ambientLight)
   console.log(ambientLight)
+
+  scene.add(bspFile)
 
   const camera = new THREE.PerspectiveCamera(
     75,

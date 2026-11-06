@@ -5,7 +5,7 @@ import { RWContainerSection, RWSection } from '../RWSection.ts'
 
 export enum AtomicFlags {
   CollisionTest = 0x01,
-  Render = 0x02
+  Render = 0x02,
 }
 
 export class RWAtomicStruct extends RWSection {

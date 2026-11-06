@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "@zanzarah.js/engine",
   "version": "0.0.1",
   "description": "",
@@ -6,7 +6,8 @@
   "author": "",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./rw": "./src/rw.ts"
   },
   "scripts": {
     "dev": "tsx src/index.ts",

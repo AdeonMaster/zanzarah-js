@@ -29,11 +29,11 @@ export { ZBinaryWriter } from './utils/ZBinaryWriter.ts'
 // const table = Table.read(reader2)
 // console.log(table.rows.length)
 
-const pathToFile = `..\\..\\examples\\RESOURCES\\WORLDS\\DUMMY.BSP`
+const pathToFile = `..\\..\\examples\\RESOURCES\\MODELS\\ABD02H.DFF`
 const buffer = fs.readFileSync(pathToFile)
 const reader = new ZBinaryReader(buffer)
-const bsp = RWBinaryFile.read(reader)
-console.dir(bsp[0].dump())
+const ddf = RWBinaryFile.read(reader)
+console.dir(ddf[0].dump())
 
 // const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sd_1000.scn`
 // const buffer = fs.readFileSync(pathToFile)

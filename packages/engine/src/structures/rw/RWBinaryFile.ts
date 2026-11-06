@@ -8,16 +8,20 @@ import {
   RWAtomicSectionStruct,
 } from './sections/RWAtomicSection.ts'
 import { RWBinMeshPLG } from './sections/RWBinMeshPLG.ts'
-import { RWClump } from './sections/RWClump.ts'
+import { RWClampStruct, RWClump } from './sections/RWClump.ts'
 import { RWExtension } from './sections/RWExtension.ts'
-import { RWFrameList } from './sections/RWFrameList.ts'
-import { RWGeometry } from './sections/RWGeometry.ts'
-import { RWGeometryList } from './sections/RWGeometryList.ts'
+import { RWFrameList, RWFrameListStruct } from './sections/RWFrameList.ts'
+import { RWGeometry, RWGeometryStruct } from './sections/RWGeometry.ts'
+import {
+  RWGeometryList,
+  RWGeometryListStruct,
+} from './sections/RWGeometryList.ts'
 import { RWMaterial, RWMaterialStruct } from './sections/RWMaterial.ts'
 import {
   RWMaterialList,
   RWMaterialListStruct,
 } from './sections/RWMaterialList.ts'
+import { RWMorphPLG } from './sections/RWMorphPLG.ts'
 import {
   RWPlaneSection,
   RWPlaneSectionStruct,
@@ -47,6 +51,7 @@ const CHUNK_CLASSES = new Map<number, ChunkCtor>([
   [SectionId.AtomicSection, RWAtomicSection],
   [SectionId.String, RWString],
   [SectionId.BinMeshPLG, RWBinMeshPLG],
+  [SectionId.MorphPLG, RWMorphPLG],
 ])
 
 /** A Struct's layout depends on its parent: parent section id -> struct class. */
@@ -58,6 +63,10 @@ const STRUCT_CLASSES = new Map<number, ChunkCtor>([
   [SectionId.PlaneSection, RWPlaneSectionStruct],
   [SectionId.Atomic, RWAtomicStruct],
   [SectionId.AtomicSection, RWAtomicSectionStruct],
+  [SectionId.Clump, RWClampStruct],
+  [SectionId.FrameList, RWFrameListStruct],
+  [SectionId.GeometryList, RWGeometryListStruct],
+  [SectionId.Geometry, RWGeometryStruct],
 ])
 
 const createSection = (
@@ -106,6 +115,7 @@ const parseChunks = (
     const size = handler.readUInt32()
     const version = handler.readUInt32()
 
+    console.log(SectionId[sectionId])
     if (size > handler.length - handler.pos()) {
       throw new Error(
         `Section ${SectionId[sectionId] ?? sectionId} at offset ${offset} declares ${size} data bytes, ` +
