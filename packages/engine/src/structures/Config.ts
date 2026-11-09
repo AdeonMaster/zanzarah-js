@@ -64,7 +64,7 @@ export class Config {
     )
   }
 
-  write(handler: ZBinaryWriter) {
+  write(_handler: ZBinaryWriter) {
     throw new Error('Config.write: Not implemented yet')
   }
 
@@ -75,7 +75,7 @@ export class Config {
     instance.firstValue = ConfigValue.read(handler)
 
     while (handler.pos() < handler.length) {
-      const name = this.readEncryptedString(handler)
+      const name = Config.readEncryptedString(handler)
       const value = ConfigValue.read(handler)
 
       instance.variables.set(name, value)

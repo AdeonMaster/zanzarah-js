@@ -11,7 +11,7 @@ export class EffectCombiner {
   position: Vector3 = new Vector3()
   parts: any[] = []
 
-  write(handler: ZBinaryWriter) {
+  write(_handler: ZBinaryWriter) {
     throw new Error('EffectCombiner.write: Not implemented yet')
   }
 

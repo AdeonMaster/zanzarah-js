@@ -38,10 +38,22 @@ export class ZBinaryReader extends BinaryReader {
 
   readMatrix4x4() {
     return new Matrix4x4(
-      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat(),
-      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat(),
-      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat(),
-      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat()
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
     )
   }
 }

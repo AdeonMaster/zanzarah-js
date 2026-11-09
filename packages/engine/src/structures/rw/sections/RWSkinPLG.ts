@@ -1,4 +1,4 @@
-import type { Float, UInt32, UInt8 } from '../../../types.ts'
+import type { Float, UInt8, UInt32 } from '../../../types.ts'
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../../utils/ZBinaryWriter.ts'
 import { Matrix4x4 } from '../../math/Matrix4x4.ts'
@@ -7,10 +7,10 @@ import { RWSection } from '../RWSection.ts'
 export enum BoneFlags {
   // the naming might be weird as it was intended
   // by RenderWare to represent matrix operations
-  IsChildless = (1 << 0),
-  HasNextSibling = (1 << 1),
+  IsChildless = 1 << 0,
+  HasNextSibling = 1 << 1,
 
-  UnknownFlag3 = (1 << 3)
+  UnknownFlag3 = 1 << 3,
 }
 
 export class Bone {
@@ -21,7 +21,7 @@ export class Bone {
   flags: BoneFlags = BoneFlags.IsChildless
   objectToBone: Matrix4x4 = new Matrix4x4()
 
-  write(handler: ZBinaryWriter) {
+  write(_handler: ZBinaryWriter) {
     throw new Error('Bone.write: Not implemented yet')
   }
 
@@ -43,25 +43,25 @@ export class RWSkinPLG extends RWSection {
   vertexWeights: Float[] = []
   bones: Bone[] = []
 
-  override write(handler: ZBinaryWriter) {
+  override write(_handler: ZBinaryWriter) {
     throw new Error('RWSkinPLG.write: Not implemented yet')
   }
 
   override read(handler: ZBinaryReader) {
     const bonesCount = handler.readUInt32()
     const vertexCount = handler.readInt32()
-    
+
     const totalVertexCount = vertexCount * RWSkinPLG.BonesPerVertex
     this.vertexIndices = new Array(totalVertexCount)
-    for(let i = 0; i < totalVertexCount; ++i) {
+    for (let i = 0; i < totalVertexCount; ++i) {
       this.vertexIndices[i] = handler.readUInt8()
     }
     this.vertexWeights = new Array(totalVertexCount)
-    for(let i = 0; i < totalVertexCount; ++i) {
+    for (let i = 0; i < totalVertexCount; ++i) {
       this.vertexWeights[i] = handler.readFloat()
     }
     this.bones = new Array(bonesCount)
-    for(let i = 0; i < bonesCount; ++i) {
+    for (let i = 0; i < bonesCount; ++i) {
       this.bones[i] = Bone.read(handler)
     }
   }

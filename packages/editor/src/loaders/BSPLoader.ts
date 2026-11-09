@@ -177,13 +177,13 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
     const normalizedName = name.toUpperCase()
     const filename = /\.[A-Z0-9]+$/.test(normalizedName)
       ? normalizedName
-      : normalizedName + '.BMP'
+      : `${normalizedName}.BMP`
     const texture = textureLoader.load(
       `data/RESOURCES/TEXTURES/WORLDS/${filename}`,
       undefined,
       undefined,
       (error) =>
-        console.warn('Failed to load BSP texture ' + filename + ':', error),
+        console.warn(`Failed to load BSP texture ${filename}:${error}`),
     )
 
     texture.wrapS = THREE.RepeatWrapping

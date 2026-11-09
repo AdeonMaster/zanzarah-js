@@ -25,9 +25,11 @@ export class RWGeometryStruct extends RWSection {
   triangles: VertexTriangle[] = []
   morphTargets: MorphTarget[] = []
 
-  override write(writer: ZBinaryWriter): void {}
+  override write(_writer: ZBinaryWriter) {
+    throw new Error('RWGeometryStruct.write: Not implemented yet')
+  }
 
-  override read(reader: ZBinaryReader): void {
+  override read(reader: ZBinaryReader) {
     this.format = reader.readUInt32()
     const trianglesCount = reader.readUInt32()
     const vertexCount = reader.readInt32()

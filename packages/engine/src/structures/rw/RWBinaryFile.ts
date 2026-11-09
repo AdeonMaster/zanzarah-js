@@ -9,6 +9,7 @@ import {
 } from './sections/RWAtomicSection.ts'
 import { RWBinMeshPLG } from './sections/RWBinMeshPLG.ts'
 import { RWClampStruct, RWClump } from './sections/RWClump.ts'
+import { RWCollisionPLG } from './sections/RWCollisionPLG.ts'
 import { RWExtension } from './sections/RWExtension.ts'
 import { RWFrameList, RWFrameListStruct } from './sections/RWFrameList.ts'
 import { RWGeometry, RWGeometryStruct } from './sections/RWGeometry.ts'
@@ -51,7 +52,8 @@ const KNOWN_SECTIONS = new Map<number, SectionCtor>([
   [SectionId.BinMeshPLG, RWBinMeshPLG],
   [SectionId.MorphPLG, RWMorphPLG],
   [SectionId.SkinPLG, RWSkinPLG],
-  [SectionId.AnimationPLG, RWAnimationPLG]
+  [SectionId.AnimationPLG, RWAnimationPLG],
+  [SectionId.CollisionPLG, RWCollisionPLG],
 ])
 
 const KNOWN_STRUCTS = new Map<number, SectionCtor>([
@@ -83,6 +85,7 @@ const readSection = (
   depth: number = 0,
 ) => {
   const children: RWSection[] = []
+  if (parent) parent.children = children
 
   while (handler.pos() < handler.length) {
     const sectionId = handler.readInt32()
@@ -99,10 +102,9 @@ const readSection = (
       const data = handler.readBytes(handler.length - handler.pos())
 
       const section = createSection({ sectionId, size, version }, parent)
+      children.push(section)
 
       section.read(new ZBinaryReader(data))
-
-      children.push(section)
 
       continue
     }
@@ -145,6 +147,6 @@ const readSection = (
 
 export class RWBinaryFile {
   static read(handler: ZBinaryReader) {
-    return readSection(handler, null, 0)[0]
+    return readSection(handler, null, 0)
   }
 }

@@ -1,6 +1,6 @@
 import type { ZBinaryReader } from '../../rw.ts'
 import type { ZBinaryWriter } from '../../utils/ZBinaryWriter.ts'
-import { SectionId } from '../rw/SectionID.ts'
+import { SectionId } from './SectionID.ts'
 
 export type RWHeader = {
   sectionId: number
@@ -48,6 +48,20 @@ export abstract class RWSection {
       if (c instanceof type) return c
     }
     return null
+  }
+
+  findChildren<T extends RWSection>(type: SectionClass<T>): T[] {
+    return this.children.filter((c): c is T => c instanceof type)
+  }
+
+  /** Depth-first search through the whole subtree. */
+  findAll<T extends RWSection>(type: SectionClass<T>): T[] {
+    const out: T[] = []
+    for (const c of this.children) {
+      if (c instanceof type) out.push(c)
+      out.push(...c.findAll(type))
+    }
+    return out
   }
 
   dump(depth = 0): string {

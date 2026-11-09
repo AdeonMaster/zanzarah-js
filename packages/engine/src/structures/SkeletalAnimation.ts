@@ -33,7 +33,7 @@ export class SkeletalAnimation {
   duration: number = 0.0
   boneFrames: AnimationKeyFrame[][] = []
 
-  write(handler: ZBinaryWriter) {
+  write(_handler: ZBinaryWriter) {
     throw new Error('SkeletalAnimation.write: Not implemented yet')
   }
 
