@@ -1,8 +1,6 @@
-﻿export { type ReadOptions, RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
-export {
-  RWContainerSection,
-  RWSection,
-} from './structures/rw/RWSection.ts'
+﻿export { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
+export { RWContainerSection } from './structures/rw/RWContainerSection.ts'
+export { RWSection } from './structures/rw/RWSection.ts'
 export { RWAtomicSection } from './structures/rw/sections/RWAtomicSection.ts'
 export { RWMaterial } from './structures/rw/sections/RWMaterial.ts'
 export { RWMaterialList } from './structures/rw/sections/RWMaterialList.ts'

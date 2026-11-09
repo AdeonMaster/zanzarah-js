@@ -1,11 +1,10 @@
-import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
+import type { ZBinaryReader } from '../../../rw.ts'
 import { RWSection } from '../RWSection.ts'
 
-/** Fallback for any chunk type we don't know how to parse. Keeps the raw bytes. */
 export class RWUnknown extends RWSection {
-  raw!: Buffer
+  raw: Buffer = Buffer.alloc(0)
 
-  override read(reader: ZBinaryReader): void {
-    this.raw = reader.readBytes(reader.length)
+  override read(handler: ZBinaryReader) {
+    this.raw = handler.readBytes(handler.length)
   }
 }

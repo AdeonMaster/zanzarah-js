@@ -1,7 +1,7 @@
-import { ZBinaryReader } from '../../utils/ZBinaryReader.ts'
-import type { RWHeader } from './RWHeader.ts'
-import type { RWSection } from './RWSection.ts'
+import { ZBinaryReader } from '../../rw.ts'
+import type { RWHeader, RWSection, SectionCtor } from './RWSection.ts'
 import { SectionId } from './SectionID.ts'
+import { RWAnimationPLG } from './sections/RWAnimationPLG.ts'
 import { RWAtomic, RWAtomicStruct } from './sections/RWAtomic.ts'
 import {
   RWAtomicSection,
@@ -26,16 +26,14 @@ import {
   RWPlaneSection,
   RWPlaneSectionStruct,
 } from './sections/RWPlaneSection.ts'
+import { RWSkinPLG } from './sections/RWSkinPLG.ts'
 import { RWString } from './sections/RWString.ts'
 import { RWTexture, RWTextureStruct } from './sections/RWTexture.ts'
 import { RWTextureDictionary } from './sections/RWTextureDictionary.ts'
 import { RWUnknown } from './sections/RWUnknown.ts'
 import { RWWorld, RWWorldStruct } from './sections/RWWorld.ts'
 
-type ChunkCtor = new (header: RWHeader, parent: RWSection | null) => RWSection
-
-/** Section id -> class (for everything except Struct). */
-const CHUNK_CLASSES = new Map<number, ChunkCtor>([
+const KNOWN_SECTIONS = new Map<number, SectionCtor>([
   [SectionId.Extension, RWExtension],
   [SectionId.Texture, RWTexture],
   [SectionId.Material, RWMaterial],
@@ -52,10 +50,11 @@ const CHUNK_CLASSES = new Map<number, ChunkCtor>([
   [SectionId.String, RWString],
   [SectionId.BinMeshPLG, RWBinMeshPLG],
   [SectionId.MorphPLG, RWMorphPLG],
+  [SectionId.SkinPLG, RWSkinPLG],
+  [SectionId.AnimationPLG, RWAnimationPLG]
 ])
 
-/** A Struct's layout depends on its parent: parent section id -> struct class. */
-const STRUCT_CLASSES = new Map<number, ChunkCtor>([
+const KNOWN_STRUCTS = new Map<number, SectionCtor>([
   [SectionId.World, RWWorldStruct],
   [SectionId.MaterialList, RWMaterialListStruct],
   [SectionId.Material, RWMaterialStruct],
@@ -69,92 +68,83 @@ const STRUCT_CLASSES = new Map<number, ChunkCtor>([
   [SectionId.Geometry, RWGeometryStruct],
 ])
 
-const createSection = (
-  header: RWHeader,
-  parent: RWSection | null,
-): RWSection => {
+const createSection = (header: RWHeader, parent: RWSection | null) => {
   const Ctor =
     header.sectionId === SectionId.Struct
-      ? STRUCT_CLASSES.get(parent?.sectionId ?? -1)
-      : CHUNK_CLASSES.get(header.sectionId)
+      ? KNOWN_STRUCTS.get(parent?.header.sectionId ?? -1)
+      : KNOWN_SECTIONS.get(header.sectionId)
 
   return new (Ctor ?? RWUnknown)(header, parent)
 }
 
-export interface ReadOptions {
-  /** Called for non-fatal problems (unknown chunks, unread trailing bytes). */
-  onWarn?: (message: string) => void
-}
-
-const parseChunks = (
+const readSection = (
   handler: ZBinaryReader,
-  parent: RWSection | null,
-  options: ReadOptions,
-): RWSection[] => {
-  // Write straight into the parent's children so that chunks are visible in
-  // the tree while their later siblings / descendants are still being parsed.
-  const out: RWSection[] = parent ? parent.children : []
+  parent: RWSection | null = null,
+  depth: number = 0,
+) => {
+  const children: RWSection[] = []
 
   while (handler.pos() < handler.length) {
-    const offset = handler.pos()
-    const remaining = handler.length - offset
-
-    if (remaining < 4) {
-      throw new Error(`Incomplete section ID at offset ${offset}`)
-    }
-
     const sectionId = handler.readInt32()
-    if (sectionId === SectionId.EOF) break
-
-    if (remaining < 12) {
-      throw new Error(
-        `Incomplete section header at offset ${offset}: ${remaining} bytes remain`,
-      )
-    }
-
     const size = handler.readUInt32()
     const version = handler.readUInt32()
 
     console.log(SectionId[sectionId])
+
     if (size > handler.length - handler.pos()) {
-      throw new Error(
-        `Section ${SectionId[sectionId] ?? sectionId} at offset ${offset} declares ${size} data bytes, ` +
-          `but only ${handler.length - handler.pos()} remain`,
+      console.warn(
+        `ERROR: ${SectionId[sectionId]} (0x${sectionId.toString(16)}) declares size ${size}, ending at ${handler.pos() + size}, beyond parent end ${handler.length}`,
+      )
+
+      const data = handler.readBytes(handler.length - handler.pos())
+
+      const section = createSection({ sectionId, size, version }, parent)
+
+      section.read(new ZBinaryReader(data))
+
+      children.push(section)
+
+      continue
+    }
+
+    const data = handler.readBytes(size)
+
+    const section = createSection({ sectionId, size, version }, parent)
+    children.push(section)
+
+    const isContainer = section.isContainer
+    if (isContainer) {
+      section.children = readSection(
+        new ZBinaryReader(data),
+        section,
+        depth + 1,
+      )
+    } else {
+      section.read(new ZBinaryReader(data))
+    }
+
+    if (section instanceof RWUnknown) {
+      console.warn(
+        `WARNING: Section ${SectionId[sectionId] ?? sectionId} isn't supported by parser`,
       )
     }
 
-    const chunk = createSection({ sectionId, size, version, offset }, parent)
-    out.push(chunk) // attach BEFORE parsing the payload
-
-    const reader = new ZBinaryReader(handler.readBytes(size))
-
-    if (chunk.isContainer) {
-      parseChunks(reader, chunk, options)
-    } else {
-      chunk.read(reader)
-
-      if (chunk instanceof RWUnknown) {
-        options.onWarn?.(
-          `Unparsed section ${chunk.sectionName} at offset ${offset}`,
+    if (depth === 0) {
+      const padding = handler.length - handler.pos()
+      if (padding > 0) {
+        console.warn(
+          `WARNING: File has ${padding} trailing byte(s) after the root chunk; ignored`,
         )
-      } else if (reader.pos() !== reader.length) {
-        options.onWarn?.(
-          `${chunk.sectionName} at offset ${offset}: ${reader.length - reader.pos()} trailing bytes not consumed`,
-        )
+        break
       }
     }
   }
 
-  return out
+  return children
 }
 
 export class RWBinaryFile {
-  static read(handler: ZBinaryReader, options: ReadOptions = {}): RWSection[] {
-    return parseChunks(handler, null, options)
-  }
-
-  /** Pretty-print the chunk tree. */
-  static dump(chunks: RWSection[]): string {
-    return chunks.map((c) => c.dump()).join('\n')
+  static read(handler: ZBinaryReader) {
+    return readSection(handler, null, 0)[0]
   }
 }

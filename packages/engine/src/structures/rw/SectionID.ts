@@ -156,7 +156,5 @@ export enum SectionId {
 
   //yes I skipped the Rockstar Custom Sections for now
 
-  EOF = 0x0202,
-
   Unknown = -1,
 }

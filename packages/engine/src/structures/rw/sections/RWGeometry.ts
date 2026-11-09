@@ -5,7 +5,8 @@ import type { Vector2 } from '../../math/Vector2.ts'
 import { Vector3 } from '../../math/Vector3.ts'
 import { VertexTriangle } from '../../VertexTriangle.ts'
 import { GeometryFormat } from '../GeometryFormat.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class MorphTarget {
   bsphereCenter: Vector3 = new Vector3()
@@ -90,7 +91,7 @@ export class RWGeometryStruct extends RWSection {
 }
 
 export class RWGeometry extends RWContainerSection {
-  get struct(): RWGeometryStruct | null {
+  get struct() {
     return this.findChild(RWGeometryStruct)
   }
 }

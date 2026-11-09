@@ -4,11 +4,12 @@ import * as THREE from 'three'
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js'
 import { ViewHelper } from 'three/addons/helpers/ViewHelper.js'
 import { DDSLoader } from 'three/addons/loaders/DDSLoader.js'
+import { RadiusHelper } from './helpers/RadiusHelper.js'
 import { BSPLoader } from './loaders/BSPLoader.js'
 
 window.Buffer = Buffer
 
-const GAME_UNITS_PER_METER = 2
+const GAME_UNITS_PER_METER = 1
 
 const raycaster = new THREE.Raycaster()
 
@@ -25,13 +26,15 @@ const loadScene = async (
   ambientLight.color.set(scn.misc.ambientLight.toIColor().raw())
 
   scn.lights.forEach((entity) => {
-    const gizmoLightIcon = loadedTextures.get('gizmo:light')
+    const gizmoDirectionalLightIcon = loadedTextures.get(
+      'gizmo:directional-light',
+    )
 
     if (entity.type === LightType.Directional) {
       const color = entity.color.toIColor().raw()
 
       const spriteMaterial = new THREE.SpriteMaterial({
-        map: gizmoLightIcon,
+        map: gizmoDirectionalLightIcon,
         color,
       })
       const sprite = new THREE.Sprite(spriteMaterial)
@@ -46,6 +49,15 @@ const loadScene = async (
         entity.pos.z * GAME_UNITS_PER_METER,
       )
 
+      light.target.position.set(entity.pos.x, entity.pos.y, entity.pos.z)
+      light.target.position.add(
+        new THREE.Vector3(
+          entity.vec.x,
+          entity.vec.y,
+          entity.vec.z,
+        ).multiplyScalar(10.0),
+      )
+
       scene.add(light)
 
       const lightHelper = new THREE.DirectionalLightHelper(light, 1)
@@ -55,7 +67,25 @@ const loadScene = async (
 
   scn.foModels.forEach((entity) => {
     const geometry = new THREE.BoxGeometry()
-    const material = new THREE.MeshStandardMaterial({ color: 0xffffff })
+    const material = new THREE.MeshStandardMaterial({
+      color: entity.color.raw(),
+    })
+    const cube = new THREE.Mesh(geometry, material)
+
+    cube.position.set(
+      entity.pos.x * GAME_UNITS_PER_METER,
+      entity.pos.y * GAME_UNITS_PER_METER,
+      entity.pos.z * GAME_UNITS_PER_METER,
+    )
+
+    scene.add(cube)
+  })
+
+  scn.models.forEach((entity) => {
+    const geometry = new THREE.BoxGeometry()
+    const material = new THREE.MeshStandardMaterial({
+      color: entity.color.raw(),
+    })
     const cube = new THREE.Mesh(geometry, material)
 
     cube.position.set(
@@ -102,26 +132,70 @@ const loadScene = async (
 
     scene.add(sprite)
   })
+
+  scn.triggers.forEach((trigger) => {
+    if (trigger.radius > 0.0) {
+      const gizmoIcon = loadedTextures.get('gizmo:trigger')
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: gizmoIcon,
+        color: 0xffffff,
+      })
+      const sprite = new THREE.Sprite(spriteMaterial)
+      sprite.scale.set(1, 1, 1) // Set world-space dimen
+
+      sprite.position.set(
+        trigger.pos.x * GAME_UNITS_PER_METER,
+        trigger.pos.y * GAME_UNITS_PER_METER,
+        trigger.pos.z * GAME_UNITS_PER_METER,
+      )
+
+      const radiusHelper = new RadiusHelper(trigger.radius)
+      sprite.add(radiusHelper)
+
+      scene.add(sprite)
+    }
+  })
+
+  scn.waypointSystem.waypoints.map((waypoint) => {
+    const gizmoIcon = loadedTextures.get('gizmo:waypoint')
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: gizmoIcon,
+      color: 0xffffff,
+    })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(1, 1, 1) // Set world-space dimen
+
+    sprite.position.set(
+      waypoint.pos.x * GAME_UNITS_PER_METER,
+      waypoint.pos.y * GAME_UNITS_PER_METER,
+      waypoint.pos.z * GAME_UNITS_PER_METER,
+    )
+
+    scene.add(sprite)
+  })
 }
+
+const gizmoIconsMap = new Map<string, string>([
+  ['gizmo:directional-light', 'icons/directional-light.png'],
+  ['gizmo:point-light', 'icons/point-light.png'],
+  ['gizmo:audio', 'icons/audio.png'],
+  ['gizmo:effect', 'icons/effect.png'],
+  ['gizmo:trigger', 'icons/trigger.png'],
+  ['gizmo:waypoint', 'icons/waypoint.png'],
+])
 
 export async function mountScene(container: HTMLElement): Promise<() => void> {
   const textureLoader = new THREE.TextureLoader()
 
-  const gizmoLightIcon = await textureLoader.loadAsync('icons/light.png')
-  gizmoLightIcon.magFilter = THREE.NearestFilter
+  for (const [key, url] of gizmoIconsMap) {
+    const iconTexture = await textureLoader.loadAsync(url)
+    iconTexture.magFilter = THREE.NearestFilter
 
-  const gizmoAudioIcon = await textureLoader.loadAsync('icons/audio.png')
-  gizmoLightIcon.magFilter = THREE.NearestFilter
-
-  const gizmoEffectIcon = await textureLoader.loadAsync('icons/effect.png')
-  gizmoEffectIcon.magFilter = THREE.NearestFilter
-
-  loadedTextures.set('gizmo:light', gizmoLightIcon)
-  loadedTextures.set('gizmo:audio', gizmoAudioIcon)
-  loadedTextures.set('gizmo:effect', gizmoEffectIcon)
+    loadedTextures.set(key, iconTexture)
+  }
 
   const bspLoader = new BSPLoader()
-  const bspFile = await bspLoader.loadAsync('SC_0210.BSP') //'SC_0210.BSP'
+  const bspFile = await bspLoader.loadAsync('SC_2421.BSP') //'SC_0210.BSP'
   console.log(bspFile)
 
   const fileLoader = new THREE.FileLoader()

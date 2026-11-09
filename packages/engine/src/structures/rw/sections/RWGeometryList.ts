@@ -1,6 +1,7 @@
 import type { ZBinaryReader, ZBinaryWriter } from '../../../index.ts'
 import type { UInt32 } from '../../../types.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class RWGeometryListStruct extends RWSection {
   geometryCount: UInt32 = 0
@@ -15,7 +16,7 @@ export class RWGeometryListStruct extends RWSection {
 }
 
 export class RWGeometryList extends RWContainerSection {
-  get struct(): RWGeometryListStruct | null {
+  get struct() {
     return this.findChild(RWGeometryListStruct)
   }
 }

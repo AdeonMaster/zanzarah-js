@@ -1,7 +1,8 @@
 import type { ZBinaryReader, ZBinaryWriter } from '../../../index.ts'
 import type { Int32 } from '../../../types.ts'
 import { Vector3 } from '../../math/Vector3.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class Frame {
   rotMatrix0: Vector3 = new Vector3()
@@ -55,7 +56,7 @@ export class RWFrameListStruct extends RWSection {
 }
 
 export class RWFrameList extends RWContainerSection {
-  get struct(): RWFrameListStruct | null {
+  get struct() {
     return this.findChild(RWFrameListStruct)
   }
 }

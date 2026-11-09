@@ -1,3 +1,4 @@
+import { Matrix4x4 } from '../structures/math/Matrix4x4.ts'
 import { Quaternion } from '../structures/math/Quaternion.ts'
 import { Vector2 } from '../structures/math/Vector2.ts'
 import { Vector3 } from '../structures/math/Vector3.ts'
@@ -33,5 +34,14 @@ export class ZBinaryReader extends BinaryReader {
     const w = this.readFloat()
 
     return new Quaternion(x, y, z, w)
+  }
+
+  readMatrix4x4() {
+    return new Matrix4x4(
+      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat(),
+      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat(),
+      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat(),
+      this.readFloat(), this.readFloat(), this.readFloat(), this.readFloat()
+    )
   }
 }

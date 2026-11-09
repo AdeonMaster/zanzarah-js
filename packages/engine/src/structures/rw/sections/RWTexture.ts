@@ -1,5 +1,6 @@
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class RWTextureStruct extends RWSection {
   filterMode = 0
@@ -19,7 +20,7 @@ export class RWTextureStruct extends RWSection {
 }
 
 export class RWTexture extends RWContainerSection {
-  get struct(): RWTextureStruct | null {
+  get struct() {
     return this.findChild(RWTextureStruct)
   }
 }

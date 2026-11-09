@@ -1,5 +1,6 @@
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class RWMaterialListStruct extends RWSection {
   materialIndices: number[] = []
@@ -14,7 +15,7 @@ export class RWMaterialListStruct extends RWSection {
 }
 
 export class RWMaterialList extends RWContainerSection {
-  get struct(): RWMaterialListStruct | null {
+  get struct() {
     return this.findChild(RWMaterialListStruct)
   }
 }

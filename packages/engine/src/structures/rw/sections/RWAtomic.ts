@@ -1,7 +1,8 @@
 import type { UInt32 } from '../../../types.ts'
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
 import type { ZBinaryWriter } from '../../../utils/ZBinaryWriter.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export enum AtomicFlags {
   CollisionTest = 0x01,
@@ -27,7 +28,7 @@ export class RWAtomicStruct extends RWSection {
 }
 
 export class RWAtomic extends RWContainerSection {
-  get struct(): RWAtomicStruct | null {
+  get struct() {
     return this.findChild(RWAtomicStruct)
   }
 }

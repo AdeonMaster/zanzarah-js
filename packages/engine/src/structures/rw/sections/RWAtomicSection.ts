@@ -5,7 +5,8 @@ import type { Vector3 } from '../../math/Vector3.ts'
 import { Normal } from '../../Normal.ts'
 import { VertexTriangle } from '../../VertexTriangle.ts'
 import { GeometryFormat } from '../GeometryFormat.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 import { RWWorld } from './RWWorld.ts'
 
 export class RWAtomicSectionStruct extends RWSection {
@@ -69,7 +70,7 @@ export class RWAtomicSectionStruct extends RWSection {
 }
 
 export class RWAtomicSection extends RWContainerSection {
-  get struct(): RWAtomicSectionStruct | null {
+  get struct() {
     return this.findChild(RWAtomicSectionStruct)
   }
 }

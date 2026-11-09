@@ -179,7 +179,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
       ? normalizedName
       : normalizedName + '.BMP'
     const texture = textureLoader.load(
-      filename,
+      `data/RESOURCES/TEXTURES/WORLDS/${filename}`,
       undefined,
       undefined,
       (error) =>

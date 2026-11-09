@@ -1,6 +1,7 @@
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
 import { IColor } from '../../IColor.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class RWMaterialStruct extends RWSection {
   flags = 0
@@ -23,7 +24,7 @@ export class RWMaterialStruct extends RWSection {
 }
 
 export class RWMaterial extends RWContainerSection {
-  get struct(): RWMaterialStruct | null {
+  get struct() {
     return this.findChild(RWMaterialStruct)
   }
 }

@@ -1,5 +1,6 @@
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class RWPlaneSectionStruct extends RWSection {
   type = 0
@@ -20,7 +21,7 @@ export class RWPlaneSectionStruct extends RWSection {
 }
 
 export class RWPlaneSection extends RWContainerSection {
-  get struct(): RWPlaneSectionStruct | null {
+  get struct() {
     return this.findChild(RWPlaneSectionStruct)
   }
 }

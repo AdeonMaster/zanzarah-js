@@ -1,8 +1,10 @@
 import fs from 'node:fs'
-import { Table } from './structures/fbs/Table.ts'
+import { ZBinaryReader } from './rw.ts'
+// import { Table } from './structures/fbs/Table.ts'
 import { RWBinaryFile } from './structures/rw/RWBinaryFile.ts'
-import { Savegame } from './structures/Savegame.ts'
-import { ZBinaryReader } from './utils/ZBinaryReader.ts'
+
+// import { Savegame } from './structures/Savegame.ts'
+// import { ZBinaryReader } from './utils/ZBinaryReader.ts'
 
 export { Config } from './structures/Config.ts'
 export { IndexTable } from './structures/fbs/IndexTable.ts'
@@ -29,11 +31,16 @@ export { ZBinaryWriter } from './utils/ZBinaryWriter.ts'
 // const table = Table.read(reader2)
 // console.log(table.rows.length)
 
-const pathToFile = `..\\..\\examples\\RESOURCES\\MODELS\\ABD02H.DFF`
+const pathToFile = `..\\..\\dump\\RESOURCES\\WORLDS\\SC_2421.BSP`
+// const pathToFile = `..\\..\\dump\\male01.dff`
+// const pathToFile = `..\\..\\dump\\RESOURCES\\MODELS\\MODELS\\ABD01H.DFF`
+// const pathToFile = `..\\..\\dump\\RESOURCES\\MODELS\\BACKDROPS\\A00AH.DFF`
+// const pathToFile = `..\\..\\dump\\RESOURCES\\MODELS\\ACTORSEX\\CHR01.DFF`
 const buffer = fs.readFileSync(pathToFile)
 const reader = new ZBinaryReader(buffer)
 const ddf = RWBinaryFile.read(reader)
-console.dir(ddf[0].dump())
+
+// console.dir(ddf, { depth: null })
 
 // const pathToFile = `E:\\SteamLibrary\\steamapps\\common\\ZanZarah\\Resources\\Worlds\\sd_1000.scn`
 // const buffer = fs.readFileSync(pathToFile)

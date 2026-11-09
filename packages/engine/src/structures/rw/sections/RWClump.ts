@@ -1,6 +1,7 @@
 import type { ZBinaryReader, ZBinaryWriter } from '../../../index.ts'
 import type { Int32, UInt32 } from '../../../types.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 
 export class RWClampStruct extends RWSection {
   atomicCount: UInt32 = 0
@@ -23,7 +24,7 @@ export class RWClampStruct extends RWSection {
 }
 
 export class RWClump extends RWContainerSection {
-  get struct(): RWClampStruct | null {
+  get struct() {
     return this.findChild(RWClampStruct)
   }
 }

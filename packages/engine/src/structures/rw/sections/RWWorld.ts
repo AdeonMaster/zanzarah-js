@@ -1,6 +1,7 @@
 import type { ZBinaryReader } from '../../../utils/ZBinaryReader.ts'
 import type { Vector3 } from '../../math/Vector3.ts'
-import { RWContainerSection, RWSection } from '../RWSection.ts'
+import { RWContainerSection } from '../RWContainerSection.ts'
+import { RWSection } from '../RWSection.ts'
 import { RWMaterialList } from './RWMaterialList.ts'
 
 const WORLD_FLAG_NATIVE = 0x01000000
@@ -38,10 +39,10 @@ export class RWWorldStruct extends RWSection {
 }
 
 export class RWWorld extends RWContainerSection {
-  get struct(): RWWorldStruct | null {
+  get struct() {
     return this.findChild(RWWorldStruct)
   }
-  get materialList(): RWMaterialList | null {
+  get materialList() {
     return this.findChild(RWMaterialList)
   }
 }
