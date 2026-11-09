@@ -60,6 +60,8 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
 
   private parseBuffer(data: ArrayBuffer, texturePath: string): THREE.Group {
     const sections = RWBinaryFile.read(new ZBinaryReader(Buffer.from(data)))
+    console.log(sections)
+
     const world = sections.find(
       (section): section is RWWorld => section instanceof RWWorld,
     )
@@ -179,7 +181,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
       ? normalizedName
       : `${normalizedName}.BMP`
     const texture = textureLoader.load(
-      `data/RESOURCES/TEXTURES/WORLDS/${filename}`,
+      filename,
       undefined,
       undefined,
       (error) =>

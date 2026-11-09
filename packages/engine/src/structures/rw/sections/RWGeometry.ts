@@ -65,8 +65,7 @@ export class RWGeometryStruct extends RWSection {
       }
 
       for (let i = 0; i < trianglesCount; ++i) {
-        this.triangles[i] = VertexTriangle.read(reader)
-        //TODO: shuffle
+        this.triangles[i] = VertexTriangle.read(reader).shuffledForGeometry()
       }
     }
 
@@ -88,6 +87,8 @@ export class RWGeometryStruct extends RWSection {
           morphTarget.normals[j] = reader.readVector3()
         }
       }
+
+      this.morphTargets[i] = morphTarget
     }
   }
 }

@@ -6,10 +6,9 @@ import { ViewHelper } from 'three/addons/helpers/ViewHelper.js'
 import { DDSLoader } from 'three/addons/loaders/DDSLoader.js'
 import { RadiusHelper } from './helpers/RadiusHelper.js'
 import { BSPLoader } from './loaders/BSPLoader.js'
+import DFFLoader from './loaders/DFFLoader.js'
 
 window.Buffer = Buffer
-
-const GAME_UNITS_PER_METER = 1
 
 const raycaster = new THREE.Raycaster()
 
@@ -17,12 +16,8 @@ const loadedTextures = new Map<string, THREE.Texture>()
 
 const loadScene = async (
   scene: THREE.Scene,
-  ambientLight: THREE.AmbientLight,
-  scn: Scene,
+  ambientLight: THREE.AmbientLight
 ) => {
-  console.log(scn)
-  console.log(scene)
-
   ambientLight.color.set(scn.misc.ambientLight.toIColor().raw())
 
   scn.lights.forEach((entity) => {
@@ -44,9 +39,9 @@ const loadScene = async (
       light.add(sprite)
 
       light.position.set(
-        entity.pos.x * GAME_UNITS_PER_METER,
-        entity.pos.y * GAME_UNITS_PER_METER,
-        entity.pos.z * GAME_UNITS_PER_METER,
+        entity.pos.x,
+        entity.pos.y,
+        entity.pos.z,
       )
 
       light.target.position.set(entity.pos.x, entity.pos.y, entity.pos.z)
@@ -65,7 +60,7 @@ const loadScene = async (
     }
   })
 
-  scn.foModels.forEach((entity) => {
+  scn.foModels.forEach(async (entity) => {
     const geometry = new THREE.BoxGeometry()
     const material = new THREE.MeshStandardMaterial({
       color: entity.color.raw(),
@@ -73,15 +68,15 @@ const loadScene = async (
     const cube = new THREE.Mesh(geometry, material)
 
     cube.position.set(
-      entity.pos.x * GAME_UNITS_PER_METER,
-      entity.pos.y * GAME_UNITS_PER_METER,
-      entity.pos.z * GAME_UNITS_PER_METER,
+      entity.pos.x,
+      entity.pos.y,
+      entity.pos.z,
     )
 
     scene.add(cube)
   })
 
-  scn.models.forEach((entity) => {
+  scn.models.forEach(async(entity) => {
     const geometry = new THREE.BoxGeometry()
     const material = new THREE.MeshStandardMaterial({
       color: entity.color.raw(),
@@ -89,9 +84,9 @@ const loadScene = async (
     const cube = new THREE.Mesh(geometry, material)
 
     cube.position.set(
-      entity.pos.x * GAME_UNITS_PER_METER,
-      entity.pos.y * GAME_UNITS_PER_METER,
-      entity.pos.z * GAME_UNITS_PER_METER,
+      entity.pos.x,
+      entity.pos.y,
+      entity.pos.z,
     )
 
     scene.add(cube)
@@ -107,9 +102,9 @@ const loadScene = async (
     sprite.scale.set(1, 1, 1) // Set world-space dimen
 
     sprite.position.set(
-      entity.pos.x * GAME_UNITS_PER_METER,
-      entity.pos.y * GAME_UNITS_PER_METER,
-      entity.pos.z * GAME_UNITS_PER_METER,
+      entity.pos.x,
+      entity.pos.y,
+      entity.pos.z,
     )
 
     scene.add(sprite)
@@ -125,9 +120,9 @@ const loadScene = async (
     sprite.scale.set(1, 1, 1) // Set world-space dimen
 
     sprite.position.set(
-      entity.pos.x * GAME_UNITS_PER_METER,
-      entity.pos.y * GAME_UNITS_PER_METER,
-      entity.pos.z * GAME_UNITS_PER_METER,
+      entity.pos.x,
+      entity.pos.y,
+      entity.pos.z,
     )
 
     scene.add(sprite)
@@ -144,9 +139,9 @@ const loadScene = async (
       sprite.scale.set(1, 1, 1) // Set world-space dimen
 
       sprite.position.set(
-        trigger.pos.x * GAME_UNITS_PER_METER,
-        trigger.pos.y * GAME_UNITS_PER_METER,
-        trigger.pos.z * GAME_UNITS_PER_METER,
+        trigger.pos.x,
+        trigger.pos.y,
+        trigger.pos.z,
       )
 
       const radiusHelper = new RadiusHelper(trigger.radius)
@@ -166,9 +161,9 @@ const loadScene = async (
     sprite.scale.set(1, 1, 1) // Set world-space dimen
 
     sprite.position.set(
-      waypoint.pos.x * GAME_UNITS_PER_METER,
-      waypoint.pos.y * GAME_UNITS_PER_METER,
-      waypoint.pos.z * GAME_UNITS_PER_METER,
+      waypoint.pos.x,
+      waypoint.pos.y,
+      waypoint.pos.z,
     )
 
     scene.add(sprite)
@@ -184,6 +179,11 @@ const gizmoIconsMap = new Map<string, string>([
   ['gizmo:waypoint', 'icons/waypoint.png'],
 ])
 
+
+
+
+
+
 export async function mountScene(container: HTMLElement): Promise<() => void> {
   const textureLoader = new THREE.TextureLoader()
 
@@ -194,19 +194,19 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
     loadedTextures.set(key, iconTexture)
   }
 
-  const bspLoader = new BSPLoader()
-  const bspFile = await bspLoader.loadAsync('SC_2421.BSP') //'SC_0210.BSP'
-  console.log(bspFile)
+  // const bspLoader = new BSPLoader()
+  // const bspFile = await bspLoader.loadAsync('data/RESOURCES/WORLDS/SC_2421.BSP') //'SC_0210.BSP'
+  // console.log(bspFile)
 
   const fileLoader = new THREE.FileLoader()
   fileLoader.setResponseType('arraybuffer')
 
-  const sceneFile = (await fileLoader.loadAsync('sc_2421.scn')) as ArrayBuffer
-  const reader = new ZBinaryReader(Buffer.from(sceneFile))
-  const scn = Scene.read(reader)
+  // const sceneFile = (await fileLoader.loadAsync('data/RESOURCES/WORLDS/sc_2421.scn')) as ArrayBuffer
+  // const reader = new ZBinaryReader(Buffer.from(sceneFile))
+  // const scn = Scene.read(reader)
 
   const ddsLoader = new DDSLoader()
-  const ddsTexture = await ddsLoader.loadAsync('FBG00TA.DDS')
+  const ddsTexture = await ddsLoader.loadAsync('data/RESOURCES/TEXTURES/BACKDROPS/FBG00TA.DDS')
 
   const mip = ddsTexture.mipmaps[0]
   const imageData = new ImageData(
@@ -226,14 +226,19 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
   scene.fog = new THREE.Fog(0xcccccc, 10, 88)
 
   const axes = new THREE.AxesHelper(5)
+  axes.material.fog = false
+  axes.material.depthWrite = false
   axes.setColors(0xff0000, 0x00ff00, 0x0000ff)
   scene.add(axes)
 
   const gridSize = 1000
   const divisions = 100
   const grid = new THREE.GridHelper(gridSize, divisions)
-  grid.position.y = -0.01
+  grid.material.depthWrite = false
   scene.add(grid)
+
+  grid.renderOrder = 1
+  axes.renderOrder = 2
 
   const cellSize = gridSize / divisions
 
@@ -241,7 +246,7 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
   scene.add(ambientLight)
   console.log(ambientLight)
 
-  scene.add(bspFile)
+  // scene.add(bspFile)
 
   const camera = new THREE.PerspectiveCamera(
     75,
@@ -355,26 +360,18 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
 
-  const geometry = new THREE.BoxGeometry()
-  const material = new THREE.MeshStandardMaterial({ color: 0xffffff })
-  const cube = new THREE.Mesh(geometry, material)
-  scene.add(cube)
-
   const timer = new THREE.Timer()
   timer.connect(document)
 
   let frameId = 0
 
-  await loadScene(scene, ambientLight, scn)
+  // await loadScene(scene, ambientLight)
 
   const animate = (timestamp: number) => {
     frameId = requestAnimationFrame(animate)
 
     timer.update(timestamp)
     const delta = Math.min(timer.getDelta(), 0.05)
-
-    cube.rotation.x += 0.01
-    cube.rotation.y += 0.01
 
     if (controls.isLocked && isRightMouseDown) {
       let forward = 0
@@ -440,8 +437,6 @@ export async function mountScene(container: HTMLElement): Promise<() => void> {
     window.removeEventListener('keyup', onKeyUp)
 
     controls.dispose()
-    geometry.dispose()
-    material.dispose()
     renderer.dispose()
     renderer.domElement.remove()
   }

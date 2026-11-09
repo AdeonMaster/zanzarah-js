@@ -8,6 +8,13 @@ export class VertexTriangle {
   v2: UInt16 = 0
   v3: UInt16 = 0
 
+  constructor(v1: UInt16 = 0, v2: UInt16 = 0, v3: UInt16 = 0, m: UInt16 = 0) {
+    this.v1 = v1
+    this.v2 = v2
+    this.v3 = v3
+    this.m = m
+  }
+
   write(handler: ZBinaryWriter) {
     handler.writeUInt16(this.m)
     handler.writeUInt16(this.v1)
@@ -23,5 +30,9 @@ export class VertexTriangle {
     instance.v3 = handler.readUInt16()
 
     return instance
+  }
+
+  shuffledForGeometry() {
+    return new VertexTriangle(this.v1, this.m, this.v3, this.v2)
   }
 }
