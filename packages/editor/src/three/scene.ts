@@ -282,6 +282,8 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
     const { width, height } = entry.contentRect
     if (width <= 0 || height <= 0) return
 
+    renderer.setSize(width, height, false)
+
     camera.aspect = width / height
     camera.updateProjectionMatrix()
   })

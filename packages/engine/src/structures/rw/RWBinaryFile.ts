@@ -92,8 +92,6 @@ const readSection = (
     const size = handler.readUInt32()
     const version = handler.readUInt32()
 
-    console.log(SectionId[sectionId])
-
     if (size > handler.length - handler.pos()) {
       console.warn(
         `ERROR: ${SectionId[sectionId]} (0x${sectionId.toString(16)}) declares size ${size}, ending at ${handler.pos() + size}, beyond parent end ${handler.length}`,

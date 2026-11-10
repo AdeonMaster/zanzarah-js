@@ -1,0 +1,35 @@
+.theme {
+  --page: #f3f4f6;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --button: #e5e7eb;
+
+  background: var(--page);
+  color: var(--text);
+
+  &[data-theme='dark'] {
+    --page: #3C3C3C;
+    --surface: #303031;
+    --text: #C4C4C4;
+    --muted: #9ca3af;
+    --button: #374151;
+  }
+
+  .header {
+    height: 38px;
+  }
+
+  .card {
+    background: var(--surface);
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .toggle {
+    background: var(--button);
+    color: var(--text);
+  }
+}

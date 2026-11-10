@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { mountRenderer } from '../scene'
+import { mountRenderer } from '../three/scene'
 
 export default function EditorCanvas() {
   const containerRef = useRef<HTMLDivElement>(null)

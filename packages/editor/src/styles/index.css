@@ -1,11 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 html,
 body,
 #root {
   width: 100%;
   height: 100%;
   margin: 0;
+}
+
+canvas {
+  outline: none;
 }
 
 .scene {
