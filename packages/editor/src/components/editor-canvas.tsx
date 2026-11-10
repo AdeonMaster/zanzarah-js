@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { mountScene } from '../scene'
+import { mountRenderer } from '../scene'
 
 export default function EditorCanvas() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -11,7 +11,7 @@ export default function EditorCanvas() {
     let disposed = false
     let cleanup: (() => void) | undefined
 
-    void mountScene(container).then((dispose) => {
+    void mountRenderer(container).then((dispose) => {
       if (disposed) {
         dispose()
       } else {
