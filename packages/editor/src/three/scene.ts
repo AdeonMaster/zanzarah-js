@@ -1,4 +1,4 @@
-import { LightType, Scene, ZBinaryReader } from '@zanzarah.js/engine'
+import { LightType, RWBinaryFile, Scene, ZBinaryReader } from '@zanzarah.js/engine'
 import { Buffer } from 'buffer'
 import * as THREE from 'three'
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js'
@@ -183,7 +183,7 @@ const editorTextures = new Map<string, string>([
 const loadedEditorTextures = new Map<string, THREE.Texture>()
 
 export const loadScene = async () => {
-  const [handle] = await window.showOpenFilePicker({
+  const [scnHandle] = await window.showOpenFilePicker({
     types: [
       {
         description: "Scene file",
@@ -195,14 +195,28 @@ export const loadScene = async () => {
     excludeAcceptAllOption: true,
     multiple: false,
   })
+  const scnFile = await scnHandle.getFile()
+  const scnArrayBuffer = await scnFile.arrayBuffer()
+  const scn = Scene.read(new ZBinaryReader(Buffer.from(scnArrayBuffer)))
 
-  const file = await handle.getFile()
-  const arrayBuffer = await file.arrayBuffer()
-
-  const reader = new ZBinaryReader(Buffer.from(arrayBuffer))
-  const scn = Scene.read(reader)
+  const [bspHandle] = await window.showOpenFilePicker({
+    types: [
+      {
+        description: "BSP file",
+        accept: {
+          'application/x-bsp': ['.bsp'],
+        },
+      },
+    ],
+    excludeAcceptAllOption: true,
+    multiple: false,
+  })
+  const bspFile = await bspHandle.getFile()
+  const bspArrayBuffer = await bspFile.arrayBuffer()
+  const bsp = RWBinaryFile.read(new ZBinaryReader(Buffer.from(bspArrayBuffer)))
 
   console.log(scn)
+  console.log(bsp)
 }
 
 export const mountRenderer = async (container: HTMLElement): Promise<() => void> => {
