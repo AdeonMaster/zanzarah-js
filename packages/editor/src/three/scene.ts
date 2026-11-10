@@ -182,8 +182,27 @@ const editorTextures = new Map<string, string>([
 
 const loadedEditorTextures = new Map<string, THREE.Texture>()
 
-const loadScene = (name: string) => {
+export const loadScene = async () => {
+  const [handle] = await window.showOpenFilePicker({
+    types: [
+      {
+        description: "Scene file",
+        accept: {
+          'application/x-scn': ['.scn'],
+        },
+      },
+    ],
+    excludeAcceptAllOption: true,
+    multiple: false,
+  })
 
+  const file = await handle.getFile()
+  const arrayBuffer = await file.arrayBuffer()
+
+  const reader = new ZBinaryReader(Buffer.from(arrayBuffer))
+  const scn = Scene.read(reader)
+
+  console.log(scn)
 }
 
 export const mountRenderer = async (container: HTMLElement): Promise<() => void> => {
