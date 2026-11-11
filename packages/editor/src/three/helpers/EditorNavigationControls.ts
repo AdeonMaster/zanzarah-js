@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { PointerLockControls } from "three/examples/jsm/Addons.js"
+import { PointerLockControls } from 'three/examples/jsm/Addons.js'
 
 const createEditorNavigationControls = (
   camera: THREE.Camera,
@@ -21,8 +21,14 @@ const createEditorNavigationControls = (
 
   const keys = new Set<string>()
   const movementKeys = new Set([
-    'KeyW', 'KeyA', 'KeyS', 'KeyD',
-    'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight',
+    'KeyW',
+    'KeyA',
+    'KeyS',
+    'KeyD',
+    'KeyQ',
+    'KeyE',
+    'ShiftLeft',
+    'ShiftRight',
   ])
 
   const direction = new THREE.Vector3()
@@ -37,58 +43,86 @@ const createEditorNavigationControls = (
     }
   }
 
-  canvas.addEventListener('contextmenu', (event) => {
-    event.preventDefault()
-  }, options)
+  canvas.addEventListener(
+    'contextmenu',
+    (event) => {
+      event.preventDefault()
+    },
+    options,
+  )
 
-  canvas.addEventListener('mousedown', async (event) => {
-    if (event.button !== 2) return
+  canvas.addEventListener(
+    'mousedown',
+    async (event) => {
+      if (event.button !== 2) return
 
-    event.preventDefault()
-    canvas.focus({ preventScroll: true })
-    rightMouseDown = true
+      event.preventDefault()
+      canvas.focus({ preventScroll: true })
+      rightMouseDown = true
 
-    try {
-      // Request directly so promise rejections can be handled.
-      await canvas.requestPointerLock()
+      try {
+        // Request directly so promise rejections can be handled.
+        await canvas.requestPointerLock()
 
-      // The button might have been released while acquiring the lock.
-      if (!rightMouseDown || abort.signal.aborted) stop()
-    } catch (error) {
-      stop()
-      console.warn('Could not enable camera navigation:', error)
-    }
-  }, options)
+        // The button might have been released while acquiring the lock.
+        if (!rightMouseDown || abort.signal.aborted) stop()
+      } catch (error) {
+        stop()
+        console.warn('Could not enable camera navigation:', error)
+      }
+    },
+    options,
+  )
 
-  window.addEventListener('mouseup', (event) => {
-    if (event.button === 2) stop()
-  }, options)
+  window.addEventListener(
+    'mouseup',
+    (event) => {
+      if (event.button === 2) stop()
+    },
+    options,
+  )
 
-  document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement !== canvas) {
-      rightMouseDown = false
-      keys.clear()
-    } else if (!rightMouseDown) {
-      stop()
-    }
-  }, options)
+  document.addEventListener(
+    'pointerlockchange',
+    () => {
+      if (document.pointerLockElement !== canvas) {
+        rightMouseDown = false
+        keys.clear()
+      } else if (!rightMouseDown) {
+        stop()
+      }
+    },
+    options,
+  )
 
-  window.addEventListener('keydown', (event) => {
-    if (!rightMouseDown || !movementKeys.has(event.code)) return
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (!rightMouseDown || !movementKeys.has(event.code)) return
 
-    event.preventDefault()
-    keys.add(event.code)
-  }, options)
+      event.preventDefault()
+      keys.add(event.code)
+    },
+    options,
+  )
 
-  window.addEventListener('keyup', (event) => {
-    keys.delete(event.code)
-  }, options)
+  window.addEventListener(
+    'keyup',
+    (event) => {
+      keys.delete(event.code)
+    },
+    options,
+  )
 
   window.addEventListener('blur', stop, options)
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop()
-  }, options)
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (document.hidden) stop()
+    },
+    options,
+  )
 
   const pressed = (code: string) => Number(keys.has(code))
 

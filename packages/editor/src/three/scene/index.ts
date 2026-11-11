@@ -1,17 +1,26 @@
-import { LightType, RWBinaryFile, Scene, ZBinaryReader } from '@zanzarah.js/engine'
+import {
+  LightType,
+  RWBinaryFile,
+  Scene,
+  ZBinaryReader,
+} from '@zanzarah.js/engine'
+import { RWString, RWTexture } from '@zanzarah.js/engine/rw'
 import { Buffer } from 'buffer'
 import * as THREE from 'three'
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js'
 import { ViewHelper } from 'three/addons/helpers/ViewHelper.js'
 import { DDSLoader } from 'three/addons/loaders/DDSLoader.js'
-import { RadiusHelper } from './helpers/RadiusHelper.js'
-import { BSPLoader } from './loaders/BSPLoader.js'
-import DFFLoader from './loaders/DFFLoader.js'
-import createEditorNavigationControls from './helpers/EditorNavigationControls.js'
+import createEditorNavigationControls from '../helpers/EditorNavigationControls.js'
+import { RadiusHelper } from '../helpers/RadiusHelper.js'
+import { BSPLoader } from '../loaders/BSPLoader.js'
+import DFFLoader from '../loaders/DFFLoader.js'
 
 window.Buffer = Buffer
 
 const textureLoader = new THREE.TextureLoader()
+const ddsLoader = new DDSLoader()
+const dffLoader = new DFFLoader()
+const bspLoader = new BSPLoader()
 
 const raycaster = new THREE.Raycaster()
 
@@ -182,44 +191,132 @@ const editorTextures = new Map<string, string>([
 
 const loadedEditorTextures = new Map<string, THREE.Texture>()
 
-export const loadScene = async () => {
-  const [scnHandle] = await window.showOpenFilePicker({
-    types: [
-      {
-        description: "Scene file",
-        accept: {
-          'application/x-scn': ['.scn'],
-        },
-      },
-    ],
-    excludeAcceptAllOption: true,
-    multiple: false,
-  })
-  const scnFile = await scnHandle.getFile()
-  const scnArrayBuffer = await scnFile.arrayBuffer()
-  const scn = Scene.read(new ZBinaryReader(Buffer.from(scnArrayBuffer)))
+let resourcesDirHandle: FileSystemDirectoryHandle
 
-  const [bspHandle] = await window.showOpenFilePicker({
-    types: [
-      {
-        description: "BSP file",
-        accept: {
-          'application/x-bsp': ['.bsp'],
-        },
-      },
-    ],
-    excludeAcceptAllOption: true,
-    multiple: false,
-  })
-  const bspFile = await bspHandle.getFile()
-  const bspArrayBuffer = await bspFile.arrayBuffer()
-  const bsp = RWBinaryFile.read(new ZBinaryReader(Buffer.from(bspArrayBuffer)))
+const scene: THREE.Scene = new THREE.Scene()
+let camera: THREE.PerspectiveCamera
 
-  console.log(scn)
-  console.log(bsp)
+const loadSceneBackdrop = async (backdropFileName: string) => {
+  if (!resourcesDirHandle) return
+
+  if (!backdropFileName.length) {
+    console.warn(`Backdrop is empty`)
+    return
+  }
+
+  const match = backdropFileName.match(/^(\d+)/g)
+  if (match) {
+    console.log('dynamic backdrop', backdropFileName)
+
+    switch (parseInt(match[0], 10)) {
+      case 2: //Forest
+        backdropFileName = 'ebg01h'
+        break
+      case 3: //Horizon
+        backdropFileName = 'sbg01m'
+        break
+      case 5: //Swamp
+        backdropFileName = 'bgsm01p'
+        break
+      case 7: //Mountain
+        backdropFileName = 'msk01f'
+        break
+      case 10: //Garden
+        backdropFileName = 'fbgsm01p'
+        break
+      default:
+        console.error(`Unsupported dynamic backdrop ${backdropFileName}`)
+    }
+  } else {
+    console.log('static backdrop', backdropFileName)
+  }
+
+  const modelsDirHandler = await resourcesDirHandle.getDirectoryHandle(
+    'models',
+    { create: false },
+  )
+  const backdropsDirHandler = await modelsDirHandler.getDirectoryHandle(
+    'backdrops',
+    { create: false },
+  )
+
+  const backdropFileHandler = await backdropsDirHandler.getFileHandle(
+    `${backdropFileName}.dff`,
+  )
+  const backdropFile = await backdropFileHandler.getFile()
+  // const backdropArrayBuffer = await backdropFile.arrayBuffer()
+  // const backdropModel = RWBinaryFile.read(new ZBinaryReader(Buffer.from(backdropArrayBuffer)))
+  // console.log(backdropModel)
+
+  // const skyModel = await dffLoader.loadAsync(URL.createObjectURL(backdropFile))
+  // scene.add(skyModel)
+
+  // const backdropModelTexName = backdropModel[0].findAll(RWTexture)?.[0].findChild(RWString)?.value || ''
+  // if (!backdropModelTexName) {
+  //   console.log('No texture')
+  // }
+
+  // const texturesDirHandler = await resourcesDirHandle.getDirectoryHandle('textures', { create: false })
+  // const backdropsTexturesDirHandler = await texturesDirHandler.getDirectoryHandle('backdrops', { create: false })
+
+  // const backdropModelTexFileHandler = await backdropsTexturesDirHandler.getFileHandle(`${backdropModelTexName}.bmp`)
+  // const backdropModelTexFile = await backdropModelTexFileHandler.getFile()
+
+  // const skyTexture = await new THREE.TextureLoader().loadAsync(URL.createObjectURL(backdropModelTexFile))
+  // const cubeTexture = new THREE.CubeTexture(Array(6).fill(skyTexture.image))
+  // cubeTexture.colorSpace = THREE.SRGBColorSpace
+  // cubeTexture.needsUpdate = true
+
+  // scene.background = cubeTexture
 }
 
-export const mountRenderer = async (container: HTMLElement): Promise<() => void> => {
+export const loadScene = async () => {
+  try {
+    resourcesDirHandle = await window.showDirectoryPicker({
+      startIn: 'desktop',
+    })
+  } catch (e) {
+    console.log(e)
+  }
+  if (!resourcesDirHandle) return
+
+  const worldsDirHandler = await resourcesDirHandle.getDirectoryHandle(
+    'Worlds',
+    { create: false },
+  )
+  const entries = []
+  for await (const [name, handle] of worldsDirHandler.entries()) {
+    entries.push({ name, kind: handle.kind, handle })
+  }
+
+  console.log(entries)
+
+  const scnFileHandle = await worldsDirHandler.getFileHandle('sc_1623.scn')
+  const scnFile = await scnFileHandle.getFile()
+  const scnArrayBuffer = await scnFile.arrayBuffer()
+  const scn = Scene.read(new ZBinaryReader(Buffer.from(scnArrayBuffer)))
+  console.log(scn)
+
+  await loadSceneBackdrop(scn.backdropFile)
+
+  const worldFileHandler = await worldsDirHandler.getFileHandle(
+    `${scn.misc.worldFile}.bsp`,
+  )
+  const worldFile = await worldFileHandler.getFile()
+  // const worldArrayBuffer = await worldFile.arrayBuffer()
+  // const wrld = RWBinaryFile.read(new ZBinaryReader(Buffer.from(worldArrayBuffer)))
+  // console.log(wrld)
+
+  const bsp = await bspLoader.loadAsync(URL.createObjectURL(worldFile))
+  scene.add(bsp)
+
+  // camera.position.set(scn.sceneOrigin.x, scn.sceneOrigin.y, scn.sceneOrigin.z) //this freeze the renderer
+  camera.lookAt(scn.sceneOrigin.x, scn.sceneOrigin.y, scn.sceneOrigin.z)
+}
+
+export const mountRenderer = async (
+  container: HTMLElement,
+): Promise<() => void> => {
   // load editor textures
   for (const [key, url] of editorTextures) {
     const iconTexture = await textureLoader.loadAsync(url)
@@ -229,8 +326,8 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
   }
 
   // create scene
-  const scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x69625D)
+  // const scene = new THREE.Scene()
+  scene.background = new THREE.Color(0x69625d)
   scene.fog = new THREE.Fog(0xcccccc, 10, 88)
 
   // axes helper
@@ -255,7 +352,7 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
   scene.add(ambientLight)
 
   // camera
-  const camera = new THREE.PerspectiveCamera(
+  camera = new THREE.PerspectiveCamera(
     75,
     container.clientWidth / container.clientHeight,
     0.1,
@@ -280,7 +377,10 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
   container.appendChild(renderer.domElement)
 
   // controls
-  const navigationControls = createEditorNavigationControls(camera, renderer.domElement)
+  const navigationControls = createEditorNavigationControls(
+    camera,
+    renderer.domElement,
+  )
 
   // rendering
   const timer = new THREE.Timer()
@@ -296,8 +396,10 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
 
     navigationControls.update(delta)
 
-    gridHelper.position.x = Math.floor(camera.position.x / gridHelperSize) * gridHelperCellSize
-    gridHelper.position.z = Math.floor(camera.position.z / gridHelperSize) * gridHelperCellSize
+    gridHelper.position.x =
+      Math.floor(camera.position.x / gridHelperSize) * gridHelperCellSize
+    gridHelper.position.z =
+      Math.floor(camera.position.z / gridHelperSize) * gridHelperCellSize
 
     if (viewHelper.animating) {
       viewHelper.update(delta)
@@ -335,7 +437,6 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
 }
 
 // export async function mountScene2(container: HTMLElement): Promise<() => void> {
- 
 
 //   // const bspLoader = new BSPLoader()
 //   // const bspFile = await bspLoader.loadAsync('data/RESOURCES/WORLDS/SC_2421.BSP') //'SC_0210.BSP'
@@ -365,9 +466,7 @@ export const mountRenderer = async (container: HTMLElement): Promise<() => void>
 
 //   scene.background = cubeTexture
 
- 
 //   // scene.add(bspFile)
-
 
 //   const onViewHelperPointerUp = (event: PointerEvent) => {
 //     if (event.button === 0) {

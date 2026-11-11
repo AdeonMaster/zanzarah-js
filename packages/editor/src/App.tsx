@@ -1,8 +1,8 @@
+import { faGripHorizontal } from '@fortawesome/free-solid-svg-icons/faGripHorizontal'
+import { faGripVertical } from '@fortawesome/free-solid-svg-icons/faGripVertical'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import EditorCanvas from './components/editor-canvas'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faGripVertical } from '@fortawesome/free-solid-svg-icons/faGripVertical'
-import { faGripHorizontal } from '@fortawesome/free-solid-svg-icons/faGripHorizontal'
 import { loadScene } from './three/scene'
 
 const HorizontalPanelResizeHandle = () => (
@@ -22,9 +22,17 @@ const App = () => {
   }
 
   return (
-    <div className="theme flex flex-col w-full h-full p-2 pt-0" data-theme="dark">
+    <div
+      className="theme flex flex-col w-full h-full p-2 pt-0"
+      data-theme="dark"
+    >
       <div className="header flex items-center">
-        <span className="text-sm cursor-default hover:bg-[#454646] p-1 rounded" onClick={handleLoadScene}>Load scene</span>
+        <span
+          className="text-sm cursor-default hover:bg-[#454646] p-1 rounded"
+          onClick={handleLoadScene}
+        >
+          Load scene
+        </span>
       </div>
 
       <Group orientation="horizontal">
@@ -36,7 +44,11 @@ const App = () => {
               <EditorCanvas />
             </Panel>
             <VerticalPanelResizeHandle />
-            <Panel className="card rounded" minSize={150} defaultSize={150}></Panel>
+            <Panel
+              className="card rounded"
+              minSize={150}
+              defaultSize={150}
+            ></Panel>
           </Group>
         </Panel>
         <HorizontalPanelResizeHandle />

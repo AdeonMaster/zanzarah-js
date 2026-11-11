@@ -8,7 +8,7 @@
   background: var(--page);
   color: var(--text);
 
-  &[data-theme='dark'] {
+  &[data-theme="dark"] {
     --page: #3C3C3C;
     --surface: #303031;
     --text: #C4C4C4;

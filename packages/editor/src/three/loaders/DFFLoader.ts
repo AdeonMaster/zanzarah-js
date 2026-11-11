@@ -119,7 +119,12 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
 
       if (parsed.skin) {
         group.updateMatrixWorld(true)
-        const skeleton = this.createSkeleton(parsed.skin, frames, frameObjects, group)
+        const skeleton = this.createSkeleton(
+          parsed.skin,
+          frames,
+          frameObjects,
+          group,
+        )
         if (skeleton && mesh instanceof THREE.SkinnedMesh) {
           mesh.bind(skeleton)
         }
@@ -239,9 +244,8 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
 
       const color = data.colors[index]
       if (color) {
-        const converted = this.toThreeColor(color).multiplyScalar(
-          COLOR_MULTIPLIER,
-        )
+        const converted =
+          this.toThreeColor(color).multiplyScalar(COLOR_MULTIPLIER)
         colors.push(converted.r, converted.g, converted.b)
       } else {
         colors.push(1, 1, 1)
@@ -301,19 +305,26 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
     }
 
     const skin =
-      section.findAll(RWSkinPLG).find((candidate) => candidate.bones.length > 0) ??
-      null
+      section
+        .findAll(RWSkinPLG)
+        .find((candidate) => candidate.bones.length > 0) ?? null
     if (skin?.bones.length) {
       if (
         skin.vertexIndices.length < vertices.length * 4 ||
         skin.vertexWeights.length < vertices.length * 4
       ) {
-        throw new Error('DFF skin data does not match the geometry vertex count')
+        throw new Error(
+          'DFF skin data does not match the geometry vertex count',
+        )
       }
 
       const skinIndices: number[] = []
       const skinWeights: number[] = []
-      for (let vertexIndex = 0; vertexIndex < vertices.length; vertexIndex += 1) {
+      for (
+        let vertexIndex = 0;
+        vertexIndex < vertices.length;
+        vertexIndex += 1
+      ) {
         const offset = vertexIndex * 4
         const weights = Array.from({ length: 4 }, (_, slot) =>
           Math.max(0, skin.vertexWeights[offset + slot]),
@@ -512,7 +523,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
 
     const parentBoneIndices = boneFrameIndices.map((frameIndex) => {
       let parentFrameIndex =
-        frameIndex >= 0 ? frames[frameIndex]?.frameIndex ?? -1 : -1
+        frameIndex >= 0 ? (frames[frameIndex]?.frameIndex ?? -1) : -1
       const visited = new Set<number>()
       while (
         parentFrameIndex >= 0 &&
