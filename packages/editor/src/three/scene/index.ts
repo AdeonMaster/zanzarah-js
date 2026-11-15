@@ -14,6 +14,11 @@ import createEditorNavigationControls from '../helpers/EditorNavigationControls.
 import { RadiusHelper } from '../helpers/RadiusHelper.js'
 import { BSPLoader } from '../loaders/BSPLoader.js'
 import DFFLoader from '../loaders/DFFLoader.js'
+import { getNestedDirectoryHandle, normalizePath } from '../utils/index.js'
+import { TriggerColliderType } from '../../../../engine/src/structures/scn/Trigger.js'
+import { MouseBoxHelper } from '../helpers/MouseBoxHelper.js'
+import { TransformControls } from 'three/examples/jsm/Addons.js'
+import { getLogger } from '../../logger.js'
 
 window.Buffer = Buffer
 
@@ -23,6 +28,8 @@ const dffLoader = new DFFLoader()
 const bspLoader = new BSPLoader()
 
 const raycaster = new THREE.Raycaster()
+
+const logger = getLogger()
 
 // const loadScene = async (
 //   scene: THREE.Scene,
@@ -102,65 +109,6 @@ const raycaster = new THREE.Raycaster()
 //     scene.add(cube)
 //   })
 
-//   scn.samples3D.forEach((entity) => {
-//     const gizmoIcon = loadedTextures.get('gizmo:audio')
-//     const spriteMaterial = new THREE.SpriteMaterial({
-//       map: gizmoIcon,
-//       color: 0xffffff,
-//     })
-//     const sprite = new THREE.Sprite(spriteMaterial)
-//     sprite.scale.set(1, 1, 1) // Set world-space dimen
-
-//     sprite.position.set(
-//       entity.pos.x,
-//       entity.pos.y,
-//       entity.pos.z,
-//     )
-
-//     scene.add(sprite)
-//   })
-
-//   scn.effects.forEach((entity) => {
-//     const gizmoIcon = loadedTextures.get('gizmo:effect')
-//     const spriteMaterial = new THREE.SpriteMaterial({
-//       map: gizmoIcon,
-//       color: 0xffffff,
-//     })
-//     const sprite = new THREE.Sprite(spriteMaterial)
-//     sprite.scale.set(1, 1, 1) // Set world-space dimen
-
-//     sprite.position.set(
-//       entity.pos.x,
-//       entity.pos.y,
-//       entity.pos.z,
-//     )
-
-//     scene.add(sprite)
-//   })
-
-//   scn.triggers.forEach((trigger) => {
-//     if (trigger.radius > 0.0) {
-//       const gizmoIcon = loadedTextures.get('gizmo:trigger')
-//       const spriteMaterial = new THREE.SpriteMaterial({
-//         map: gizmoIcon,
-//         color: 0xffffff,
-//       })
-//       const sprite = new THREE.Sprite(spriteMaterial)
-//       sprite.scale.set(1, 1, 1) // Set world-space dimen
-
-//       sprite.position.set(
-//         trigger.pos.x,
-//         trigger.pos.y,
-//         trigger.pos.z,
-//       )
-
-//       const radiusHelper = new RadiusHelper(trigger.radius)
-//       sprite.add(radiusHelper)
-
-//       scene.add(sprite)
-//     }
-//   })
-
 //   scn.waypointSystem.waypoints.map((waypoint) => {
 //     const gizmoIcon = loadedTextures.get('gizmo:waypoint')
 //     const spriteMaterial = new THREE.SpriteMaterial({
@@ -191,22 +139,22 @@ const editorTextures = new Map<string, string>([
 
 const loadedEditorTextures = new Map<string, THREE.Texture>()
 
-let resourcesDirHandle: FileSystemDirectoryHandle
+let rootDirHandle: FileSystemDirectoryHandle
 
-const scene: THREE.Scene = new THREE.Scene()
+let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
 
-const loadSceneBackdrop = async (backdropFileName: string) => {
-  if (!resourcesDirHandle) return
+let transformControls: TransformControls
 
+const loadSceneBackdrop = async (backdropFileName: string) => {
   if (!backdropFileName.length) {
-    console.warn(`Backdrop is empty`)
+    logger.warn(`Backdrop is empty`)
     return
   }
 
   const match = backdropFileName.match(/^(\d+)/g)
   if (match) {
-    console.log('dynamic backdrop', backdropFileName)
+    logger.log(`dynamic backdrop ${backdropFileName}`)
 
     switch (parseInt(match[0], 10)) {
       case 2: //Forest
@@ -228,10 +176,10 @@ const loadSceneBackdrop = async (backdropFileName: string) => {
         console.error(`Unsupported dynamic backdrop ${backdropFileName}`)
     }
   } else {
-    console.log('static backdrop', backdropFileName)
+    logger.log(`static backdrop ${backdropFileName}`)
   }
 
-  const modelsDirHandler = await resourcesDirHandle.getDirectoryHandle(
+  const modelsDirHandler = await rootDirHandle.getDirectoryHandle(
     'models',
     { create: false },
   )
@@ -270,18 +218,119 @@ const loadSceneBackdrop = async (backdropFileName: string) => {
   // scene.background = cubeTexture
 }
 
+const loadSceneEntities = async (scn: Scene) => {
+  
+  // samples 3D
+  for (const sample3D of scn.samples3D) {
+    const gizmoIcon = loadedEditorTextures.get('gizmo:audio')
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: gizmoIcon,
+      color: 0xffffff,
+    })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(1, 1, 1) // Set world-space dimen
+
+    sprite.position.set(
+      sample3D.pos.x,
+      sample3D.pos.y,
+      sample3D.pos.z,
+    )
+
+    scene.add(sprite)
+  }
+
+  // effects
+  for (const effect of scn.effects) {
+    const gizmoIcon = loadedEditorTextures.get('gizmo:effect')
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: gizmoIcon,
+      color: 0xffffff,
+    })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(1, 1, 1) // Set world-space dimen
+
+    sprite.position.set(
+      effect.pos.x,
+      effect.pos.y,
+      effect.pos.z,
+    )
+
+    scene.add(sprite)
+  }
+
+  // models
+  const modelsDirHandler = await getNestedDirectoryHandle(rootDirHandle, 'resources/models/models')
+  for (const model of scn.models) {
+    try {
+      const modelFileHandler = await modelsDirHandler.getFileHandle(`${model.filename}.dff`)
+      const modelFile = await modelFileHandler.getFile()
+      const ddfModel = await dffLoader.loadAsync(URL.createObjectURL(modelFile))
+
+      ddfModel.position.set(model.pos.x, model.pos.y, model.pos.z)
+      ddfModel.rotation.copy(new THREE.Euler(model.rot.x, model.rot.y, model.rot.z, 'XYZ'))
+      
+      scene.add(ddfModel)
+    } catch(e) {
+      logger.error(e)
+    }
+  }
+
+  // fo models
+  for (const foModel of scn.foModels) {
+    try {
+      const modelFileHandler = await modelsDirHandler.getFileHandle(`${foModel.filename}.dff`)
+      const modelFile = await modelFileHandler.getFile()
+      const ddfModel = await dffLoader.loadAsync(URL.createObjectURL(modelFile))
+
+      ddfModel.position.set(foModel.pos.x, foModel.pos.y, foModel.pos.z)
+      ddfModel.rotation.copy(new THREE.Euler(foModel.rot.x, foModel.rot.y, foModel.rot.z, 'XYZ'))
+      
+      scene.add(ddfModel)
+    } catch(e) {
+      logger.error(e)
+    }
+  }
+
+  // triggers
+  for (const trigger of scn.triggers) {
+    const gizmoIcon = loadedEditorTextures.get('gizmo:trigger')
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: gizmoIcon,
+      color: 0xffffff,
+    })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(1, 1, 1) // Set world-space dimen
+
+    sprite.position.set(
+      trigger.pos.x,
+      trigger.pos.y,
+      trigger.pos.z,
+    )
+
+    if (trigger.colliderType === TriggerColliderType.Sphere) {
+      const radiusHelper = new RadiusHelper(trigger.radius)
+      sprite.add(radiusHelper)
+    } else {
+      const box = new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(trigger.end.x - trigger.pos.x, trigger.end.y - trigger.pos.y, trigger.end.z - trigger.pos.z))
+      const helper = new THREE.Box3Helper(box, 0x80a676)
+      sprite.add(helper)
+    }
+
+    scene.add(sprite)
+  }
+}
+
 export const loadScene = async () => {
   try {
-    resourcesDirHandle = await window.showDirectoryPicker({
-      startIn: 'desktop',
-    })
+    rootDirHandle = await window.showDirectoryPicker()
   } catch (e) {
-    console.log(e)
+    logger.error(e)
+    return
   }
-  if (!resourcesDirHandle) return
 
-  const worldsDirHandler = await resourcesDirHandle.getDirectoryHandle(
-    'Worlds',
+  const worldsDirHandler = await getNestedDirectoryHandle(
+    rootDirHandle,
+    'Resources/Worlds',
     { create: false },
   )
   const entries = []
@@ -289,29 +338,32 @@ export const loadScene = async () => {
     entries.push({ name, kind: handle.kind, handle })
   }
 
-  console.log(entries)
+  logger.log(entries)
 
-  const scnFileHandle = await worldsDirHandler.getFileHandle('sc_1623.scn')
+  logger.log('Loading scene..')
+
+  const scnFileHandle = await worldsDirHandler.getFileHandle('sc_2421.scn')
   const scnFile = await scnFileHandle.getFile()
   const scnArrayBuffer = await scnFile.arrayBuffer()
   const scn = Scene.read(new ZBinaryReader(Buffer.from(scnArrayBuffer)))
-  console.log(scn)
+  logger.log(scn)
 
-  await loadSceneBackdrop(scn.backdropFile)
+  //await loadSceneBackdrop(scn.backdropFile)
 
-  const worldFileHandler = await worldsDirHandler.getFileHandle(
-    `${scn.misc.worldFile}.bsp`,
+  const normalizedWorldPath = normalizePath(scn.misc.worldPath)
+  // const normalizedTexturePath = normalizePath(scn.misc.texturePath)
+  const bsp = await bspLoader.loadAsync(
+    rootDirHandle,
+    `${normalizedWorldPath}/${scn.misc.worldFile}.bsp`,
   )
-  const worldFile = await worldFileHandler.getFile()
-  // const worldArrayBuffer = await worldFile.arrayBuffer()
-  // const wrld = RWBinaryFile.read(new ZBinaryReader(Buffer.from(worldArrayBuffer)))
-  // console.log(wrld)
-
-  const bsp = await bspLoader.loadAsync(URL.createObjectURL(worldFile))
   scene.add(bsp)
 
-  // camera.position.set(scn.sceneOrigin.x, scn.sceneOrigin.y, scn.sceneOrigin.z) //this freeze the renderer
+  await loadSceneEntities(scn)
+
+  camera.position.set(scn.sceneOrigin.x, scn.sceneOrigin.y, scn.sceneOrigin.z) //this freeze the renderer
   camera.lookAt(scn.sceneOrigin.x, scn.sceneOrigin.y, scn.sceneOrigin.z)
+
+  logger.log('Scene loaded!')
 }
 
 export const mountRenderer = async (
@@ -326,13 +378,14 @@ export const mountRenderer = async (
   }
 
   // create scene
-  // const scene = new THREE.Scene()
+  scene = new THREE.Scene()
   scene.background = new THREE.Color(0x69625d)
   scene.fog = new THREE.Fog(0xcccccc, 10, 88)
 
   // axes helper
   const axesHelper = new THREE.AxesHelper(5)
-  axesHelper.setColors(0xff0000, 0x00ff00, 0x0000ff)
+  // axesHelper.setColors(0xff0000, 0x00ff00, 0x0000ff)
+  axesHelper.setColors(0xFF4466, 0x88FF44, 0x4488FF)
   axesHelper.material.fog = false
   axesHelper.material.depthWrite = false
   axesHelper.renderOrder = 2
@@ -376,6 +429,15 @@ export const mountRenderer = async (
   renderer.domElement.style.display = 'block'
   container.appendChild(renderer.domElement)
 
+  // transform controls
+  transformControls = new TransformControls(camera, renderer.domElement)
+  transformControls.enabled = false
+  transformControls.setColors(0xFF4466, 0x88FF44, 0x4488FF, 0xFFFFFF)
+  scene.add(transformControls.getHelper())
+
+  // mouseHelper
+  const mouseHelper = new MouseBoxHelper(renderer, 24)
+
   // controls
   const navigationControls = createEditorNavigationControls(
     camera,
@@ -407,6 +469,8 @@ export const mountRenderer = async (
 
     renderer.render(scene, camera)
     viewHelper.render(renderer)
+
+    mouseHelper.render()
   }
 
   frameId = requestAnimationFrame(render)
@@ -425,7 +489,28 @@ export const mountRenderer = async (
 
   resizeObserver.observe(container)
 
+  const handleClick = () => {
+    const x = (mouseHelper.mouse.x / container.clientWidth) * 2 - 1
+    const y = -(mouseHelper.mouse.y / container.clientHeight) * 2 + 1
+
+    raycaster.setFromCamera(new THREE.Vector2(x, y), camera)
+    const intersects = raycaster.intersectObjects(scene.children, true)
+    if (intersects.length > 0) {
+        // 3. The closest hit object
+        const clickedMesh = intersects[0].object
+        logger.log('Clicked object:', clickedMesh)
+
+        transformControls.attach(clickedMesh)
+    } else {
+      transformControls.detach()
+    }
+  }
+
+  renderer.domElement.addEventListener('click', handleClick)
+
   return () => {
+    renderer.domElement.removeEventListener('click', handleClick)
+
     cancelAnimationFrame(frameId)
     resizeObserver.disconnect()
     timer.dispose()
@@ -439,9 +524,6 @@ export const mountRenderer = async (
 // export async function mountScene2(container: HTMLElement): Promise<() => void> {
 
 //   // const bspLoader = new BSPLoader()
-//   // const bspFile = await bspLoader.loadAsync('data/RESOURCES/WORLDS/SC_2421.BSP') //'SC_0210.BSP'
-//   // console.log(bspFile)
-
 //   const fileLoader = new THREE.FileLoader()
 //   fileLoader.setResponseType('arraybuffer')
 
@@ -510,22 +592,22 @@ export const mountRenderer = async (
 //     }
 //   }
 
-//   const mouse = new THREE.Vector2()
+  // const mouse = new THREE.Vector2()
 
-//   const onPoinerMove = (event: PointerEvent) => {
-//     mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-//     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-//   }
+  // const onPoinerMove = (event: PointerEvent) => {
+  //   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+  //   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+  // }
 
-//   const onClick = () => {
-//     // raycaster.setFromCamera(mouse, camera)
-//     // const intersects = raycaster.intersectObjects(scene.children, true)
-//     // if (intersects.length > 0) {
-//     //     // 3. The closest hit object
-//     //     const clickedMesh = intersects[0].object
-//     //     console.log('Clicked object:', clickedMesh)
-//     // }
-//   }
+  // const onClick = () => {
+  //   // raycaster.setFromCamera(mouse, camera)
+  //   // const intersects = raycaster.intersectObjects(scene.children, true)
+  //   // if (intersects.length > 0) {
+  //   //     // 3. The closest hit object
+  //   //     const clickedMesh = intersects[0].object
+  //   //     console.log('Clicked object:', clickedMesh)
+  //   // }
+  // }
 
 //   const onDoubleClick = () => {
 //     raycaster.setFromCamera(mouse, camera)

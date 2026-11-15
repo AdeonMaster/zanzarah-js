@@ -10,6 +10,7 @@
 } from '@zanzarah.js/engine/rw'
 import { Buffer } from 'buffer'
 import * as THREE from 'three'
+import { getNestedDirectoryHandle, normalizePath } from '../utils/index.js'
 
 const COLOR_MULTIPLIER = 2
 
@@ -19,46 +20,163 @@ interface ColorData {
   b: number
 }
 
-export class BSPLoader extends THREE.Loader<THREE.Group, string> {
+export class BSPLoader extends THREE.Loader<
+  THREE.Group,
+  FileSystemDirectoryHandle
+> {
   load(
-    url: string,
+    rootHandle: FileSystemDirectoryHandle,
+    onLoad: (group: THREE.Group) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (error: unknown) => void,
+  ): void
+  load(
+    rootHandle: FileSystemDirectoryHandle,
+    path: string,
+    onLoad: (group: THREE.Group) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (error: unknown) => void,
+  ): void
+  load(
+    rootHandle: FileSystemDirectoryHandle,
+    pathOrOnLoad: string | ((group: THREE.Group) => void),
+    onLoadOrProgress?:
+      | ((group: THREE.Group) => void)
+      | ((event: ProgressEvent) => void),
+    onProgressOrError?:
+      | ((event: ProgressEvent) => void)
+      | ((error: unknown) => void),
+    directOnError?: (error: unknown) => void,
+  ): void {
+    if (typeof pathOrOnLoad === 'string') {
+      this.loadFromDirectory(
+        rootHandle,
+        pathOrOnLoad,
+        onLoadOrProgress as (group: THREE.Group) => void,
+        onProgressOrError as ((event: ProgressEvent) => void) | undefined,
+        directOnError,
+      )
+      return
+    }
+
+    this.loadFromDirectory(
+      rootHandle,
+      this.path,
+      pathOrOnLoad,
+      onLoadOrProgress as ((event: ProgressEvent) => void) | undefined,
+      onProgressOrError as ((error: unknown) => void) | undefined,
+    )
+  }
+
+  loadAsync(
+    rootHandle: FileSystemDirectoryHandle,
+    onProgress?: (event: ProgressEvent) => void,
+  ): Promise<THREE.Group>
+  loadAsync(
+    rootHandle: FileSystemDirectoryHandle,
+    path: string,
+    onProgress?: (event: ProgressEvent) => void,
+  ): Promise<THREE.Group>
+  loadAsync(
+    rootHandle: FileSystemDirectoryHandle,
+    pathOrProgress?: string | ((event: ProgressEvent) => void),
+    directProgress?: (event: ProgressEvent) => void,
+  ): Promise<THREE.Group> {
+    return new Promise((resolve, reject) => {
+      if (typeof pathOrProgress === 'string') {
+        this.load(rootHandle, pathOrProgress, resolve, directProgress, reject)
+        return
+      }
+
+      this.load(rootHandle, resolve, pathOrProgress, reject)
+    })
+  }
+
+  private loadFromDirectory(
+    rootHandle: FileSystemDirectoryHandle,
+    path: string,
     onLoad: (group: THREE.Group) => void,
     onProgress?: (event: ProgressEvent) => void,
     onError?: (error: unknown) => void,
   ): void {
-    const fileLoader = new THREE.FileLoader(this.manager)
-      .setPath(this.path)
-      .setResponseType('arraybuffer')
-      .setWithCredentials(this.withCredentials)
-      .setRequestHeader(this.requestHeader)
+    const normalizedPath = normalizePath(path)
+    const pathParts = normalizedPath
+      .split('/')
+      .filter((part) => part && part !== '.')
 
-    fileLoader.load(
-      url,
-      (data) => {
+    if (pathParts.some((part) => part === '..')) {
+      this.reportLoadError(
+        new Error(`BSP path must stay within the selected directory: ${path}`),
+        onError,
+        'Failed to load BSP file:',
+      )
+      return
+    }
+    if (pathParts.length === 0) {
+      this.reportLoadError(
+        new Error('A path to the BSP file is required'),
+        onError,
+        'Failed to load BSP file:',
+      )
+      return
+    }
+
+    const fileName = pathParts.pop()!
+    const directoryPath = pathParts.join('/')
+    this.manager.itemStart(normalizedPath)
+
+    void (async () => {
+      try {
+        const fileDirectory = directoryPath
+          ? await getNestedDirectoryHandle(rootHandle, directoryPath)
+          : rootHandle
+        const fileHandle = await fileDirectory.getFileHandle(fileName)
+        const file = await fileHandle.getFile()
+        const data = await file.arrayBuffer()
+        onProgress?.(
+          new ProgressEvent('progress', {
+            lengthComputable: true,
+            loaded: data.byteLength,
+            total: file.size,
+          }),
+        )
+
         try {
-          const texturePath =
-            this.resourcePath ||
-            this.path ||
-            THREE.LoaderUtils.extractUrlBase(url)
-          onLoad(this.parseBuffer(data as ArrayBuffer, texturePath))
+          const texturesDirHandler = await getNestedDirectoryHandle(rootHandle, 'Resources/Textures/Worlds')
+
+          const group = this.parseBuffer(data, '', texturesDirHandler)
+          onLoad(group)
+          this.manager.itemEnd(normalizedPath)
         } catch (error) {
-          if (onError) {
-            onError(error)
-          } else {
-            console.error('Failed to parse BSP file:', error)
-          }
+          this.manager.itemError(normalizedPath)
+          this.manager.itemEnd(normalizedPath)
+          this.reportLoadError(error, onError, 'Failed to parse BSP file:')
         }
-      },
-      onProgress,
-      onError,
-    )
+      } catch (error) {
+        this.manager.itemError(normalizedPath)
+        this.manager.itemEnd(normalizedPath)
+        this.reportLoadError(error, onError, 'Failed to load BSP file:')
+      }
+    })()
   }
 
-  parse(data: ArrayBuffer): THREE.Group {
-    return this.parseBuffer(data, this.resourcePath || this.path)
+  private reportLoadError(
+    error: unknown,
+    onError: ((error: unknown) => void) | undefined,
+    message: string,
+  ): void {
+    if (onError) {
+      onError(error)
+    } else {
+      console.error(message, error)
+    }
   }
 
-  private parseBuffer(data: ArrayBuffer, texturePath: string): THREE.Group {
+  private parseBuffer(
+    data: ArrayBuffer,
+    texturePath: string,
+    texturesDirHandler: FileSystemDirectoryHandle,
+  ): THREE.Group {
     const sections = RWBinaryFile.read(new ZBinaryReader(Buffer.from(data)))
     console.log(sections)
 
@@ -76,6 +194,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
     const materials = this.parseMaterials(
       world.findChild(RWMaterialList),
       textureLoader,
+      texturesDirHandler,
     )
     const group = new THREE.Group()
 
@@ -101,6 +220,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
   private parseMaterials(
     materialList: RWMaterialList | null,
     textureLoader: THREE.TextureLoader,
+    texturesDirHandler: FileSystemDirectoryHandle,
   ): THREE.MeshBasicMaterial[] {
     const fallbackMaterial = () =>
       new THREE.MeshBasicMaterial({
@@ -118,7 +238,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
     if (!materialIndices?.length) {
       return definitions.length
         ? definitions.map((section) =>
-            this.parseMaterial(section, textureLoader),
+            this.parseMaterial(section, textureLoader, texturesDirHandler),
           )
         : [fallbackMaterial()]
     }
@@ -132,7 +252,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
         nextDefinition += 1
         materials.push(
           section
-            ? this.parseMaterial(section, textureLoader)
+            ? this.parseMaterial(section, textureLoader, texturesDirHandler)
             : fallbackMaterial(),
         )
         continue
@@ -147,6 +267,7 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
   private parseMaterial(
     section: RWMaterial,
     textureLoader: THREE.TextureLoader,
+    texturesDirHandler: FileSystemDirectoryHandle,
   ): THREE.MeshBasicMaterial {
     const colorData = section.struct?.color
     const material = new THREE.MeshBasicMaterial({
@@ -160,10 +281,20 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
       .findChildren(RWString)
       .map((string) => string.value.trim())
     if (colorName) {
-      material.map = this.loadTexture(colorName, textureLoader, true)
+      material.map = this.loadTexture(
+        colorName,
+        textureLoader,
+        true,
+        texturesDirHandler,
+      )
     }
     if (alphaName) {
-      material.alphaMap = this.loadTexture(alphaName, textureLoader, false)
+      material.alphaMap = this.loadTexture(
+        alphaName,
+        textureLoader,
+        false,
+        texturesDirHandler,
+      )
       material.transparent = true
       material.alphaTest = 0.05
     }
@@ -175,24 +306,82 @@ export class BSPLoader extends THREE.Loader<THREE.Group, string> {
     name: string,
     textureLoader: THREE.TextureLoader,
     isColor: boolean,
+    texturesDirHandler?: FileSystemDirectoryHandle,
   ): THREE.Texture {
     const normalizedName = name.toUpperCase()
     const filename = /\.[A-Z0-9]+$/.test(normalizedName)
       ? normalizedName
       : `${normalizedName}.BMP`
-    const texture = textureLoader.load(
-      filename,
-      undefined,
-      undefined,
-      (error) =>
-        console.warn(`Failed to load BSP texture ${filename}:${error}`),
-    )
+    const texture = texturesDirHandler
+      ? new THREE.Texture()
+      : textureLoader.load(
+          filename,
+          undefined,
+          undefined,
+          (error) =>
+            console.warn(`Failed to load BSP texture ${filename}:${error}`),
+        )
+
+    if (texturesDirHandler) {
+      this.loadTextureFromDirectory(filename, texturesDirHandler, texture)
+    }
 
     texture.wrapS = THREE.RepeatWrapping
     texture.wrapT = THREE.RepeatWrapping
     if (isColor) texture.colorSpace = THREE.SRGBColorSpace
 
     return texture
+  }
+
+  private loadTextureFromDirectory(
+    path: string,
+    texturesDirHandler: FileSystemDirectoryHandle,
+    texture: THREE.Texture,
+  ): void {
+    const normalizedPath = path.replaceAll('\\', '/')
+    const pathParts = normalizedPath
+      .split('/')
+      .filter((part) => part && part !== '.')
+    if (pathParts.some((part) => part === '..') || pathParts.length === 0) {
+      console.warn(`Failed to load BSP texture ${path}: invalid texture path`)
+      return
+    }
+
+    const fileName = pathParts.pop()!
+    this.manager.itemStart(path)
+
+    void (async () => {
+      let objectUrl: string | undefined
+      try {
+        const fileHandle = await texturesDirHandler.getFileHandle(fileName)
+        const file = await fileHandle.getFile()
+        objectUrl = URL.createObjectURL(file)
+
+        const imageLoader = new THREE.ImageLoader(this.manager)
+          .setCrossOrigin(this.crossOrigin)
+        imageLoader.load(
+          objectUrl,
+          (image) => {
+            texture.image = image
+            texture.needsUpdate = true
+            URL.revokeObjectURL(objectUrl!)
+            this.manager.itemEnd(path)
+          },
+          undefined,
+          (error) => {
+            URL.revokeObjectURL(objectUrl!)
+            this.manager.itemError(path)
+            this.manager.itemEnd(path)
+            console.warn(`Failed to load BSP texture ${path}:`, error)
+          },
+        )
+      } catch (error) {
+        if (objectUrl) URL.revokeObjectURL(objectUrl)
+        this.manager.itemError(path)
+        this.manager.itemEnd(path)
+        console.warn(`Failed to load BSP texture ${path}:`, error)
+      }
+    })()
   }
 
   private parseGeometry(

@@ -4,6 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import EditorCanvas from './components/editor-canvas'
 import { loadScene } from './three/scene'
+import { useLogger } from './hooks/use-logger'
+import { useLayoutEffect, useRef } from 'react'
+import { faEraser } from '@fortawesome/free-solid-svg-icons'
 
 const HorizontalPanelResizeHandle = () => (
   <Separator className="flex items-center text-xs">
@@ -16,9 +19,36 @@ const VerticalPanelResizeHandle = () => (
   </Separator>
 )
 
+const getEntryTypeClassName = (type: number) => {
+  switch(type) {
+    case 1:
+      return 'text-amber-800'
+    case 2:
+      return 'text-red-800'
+    default:
+      return ''
+  }
+}
+
 const App = () => {
+  const { entries, clear } = useLogger()
+
   const handleLoadScene = () => {
     loadScene()
+  }
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const element = scrollRef.current
+
+    if (element) {
+      element.scrollTop = element.scrollHeight
+    }
+  }, [entries])
+
+  const handleConsoleClear = () => {
+    clear()
   }
 
   return (
@@ -45,14 +75,26 @@ const App = () => {
             </Panel>
             <VerticalPanelResizeHandle />
             <Panel
-              className="card rounded"
+              className="card2 rounded"
               minSize={150}
               defaultSize={150}
-            ></Panel>
+            > 
+              <div className='flex flex-col h-full'>
+                <div className='flex shrink-0 p-1 justify-end'>
+                  <div className='cursor-default hover:bg-[#454646] p-1 rounded h-[24px] w-[24px] flex items-center justify-center' onClick={handleConsoleClear}>
+                    <FontAwesomeIcon icon={faEraser} size="xs" />
+                  </div>
+                </div>
+                <div ref={scrollRef} className='overflow-x-auto p-2'>
+                  {entries.map((entry) => <p key={entry.timestamp} className={`text-xs ${getEntryTypeClassName(entry.type)}`}>{entry.message}</p>)}
+                </div>
+              </div>
+            </Panel>
           </Group>
         </Panel>
         <HorizontalPanelResizeHandle />
-        <Panel className="card rounded" minSize={150} defaultSize={250}></Panel>
+        <Panel className="card rounded" minSize={150} defaultSize={250}>
+        </Panel>
       </Group>
     </div>
   )

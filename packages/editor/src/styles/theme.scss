@@ -11,6 +11,7 @@
   &[data-theme="dark"] {
     --page: #3C3C3C;
     --surface: #303031;
+    --surface2: #1E1E1E;
     --text: #C4C4C4;
     --muted: #9ca3af;
     --button: #374151;
@@ -22,6 +23,10 @@
 
   .card {
     background: var(--surface);
+  }
+
+  .card2 {
+    background: var(--surface2);
   }
 
   .muted {
