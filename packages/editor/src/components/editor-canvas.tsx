@@ -8,19 +8,21 @@ export default function EditorCanvas() {
     const container = containerRef.current
     if (!container) return
 
-    let disposed = false
+    const controller = new AbortController()
     let cleanup: (() => void) | undefined
 
-    void mountRenderer(container).then((dispose) => {
-      if (disposed) {
-        dispose()
-      } else {
+    void mountRenderer(container, controller.signal)
+      .then((dispose) => {
         cleanup = dispose
-      }
-    })
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          console.error('Could not mount renderer:', error)
+        }
+      })
 
     return () => {
-      disposed = true
+      controller.abort()
       cleanup?.()
     }
   }, [])

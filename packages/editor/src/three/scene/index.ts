@@ -144,8 +144,6 @@ let rootDirHandle: FileSystemDirectoryHandle
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
 
-let transformControls: TransformControls
-
 const loadSceneBackdrop = async (backdropFileName: string) => {
   if (!backdropFileName.length) {
     logger.warn(`Backdrop is empty`)
@@ -368,7 +366,10 @@ export const loadScene = async () => {
 
 export const mountRenderer = async (
   container: HTMLElement,
+  signal?: AbortSignal,
 ): Promise<() => void> => {
+  if (signal?.aborted) return () => {}
+
   // load editor textures
   for (const [key, url] of editorTextures) {
     const iconTexture = await textureLoader.loadAsync(url)
@@ -377,10 +378,16 @@ export const mountRenderer = async (
     loadedEditorTextures.set(key, iconTexture)
   }
 
+  // A component can unmount while the textures above are loading (React
+  // StrictMode does this deliberately in development). Do not create a
+  // renderer or start an animation loop for that abandoned mount.
+  if (signal?.aborted) return () => {}
+
   // create scene
-  scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x69625d)
-  scene.fog = new THREE.Fog(0xcccccc, 10, 88)
+  const mountScene = new THREE.Scene()
+  scene = mountScene
+  mountScene.background = new THREE.Color(0x69625d)
+  mountScene.fog = new THREE.Fog(0xcccccc, 10, 88)
 
   // axes helper
   const axesHelper = new THREE.AxesHelper(5)
@@ -389,7 +396,7 @@ export const mountRenderer = async (
   axesHelper.material.fog = false
   axesHelper.material.depthWrite = false
   axesHelper.renderOrder = 2
-  scene.add(axesHelper)
+  mountScene.add(axesHelper)
 
   // grid helper
   const gridHelperSize = 1000
@@ -398,24 +405,25 @@ export const mountRenderer = async (
   const gridHelper = new THREE.GridHelper(gridHelperSize, gridHelperDivisions)
   gridHelper.material.depthWrite = false
   gridHelper.renderOrder = 1
-  scene.add(gridHelper)
+  mountScene.add(gridHelper)
 
   // ambient light
   const ambientLight = new THREE.AmbientLight(0xffffff, 1)
-  scene.add(ambientLight)
+  mountScene.add(ambientLight)
 
   // camera
-  camera = new THREE.PerspectiveCamera(
+  const mountCamera = new THREE.PerspectiveCamera(
     75,
     container.clientWidth / container.clientHeight,
     0.1,
     2000,
   )
-  camera.position.set(0, 2, 8)
-  camera.lookAt(0, 0, 0)
+  camera = mountCamera
+  mountCamera.position.set(0, 2, 8)
+  mountCamera.lookAt(0, 0, 0)
 
   // view helper
-  const viewHelper = new ViewHelper(camera, container)
+  const viewHelper = new ViewHelper(mountCamera, container)
   viewHelper.location.top = 0
   viewHelper.location.right = 0
 
@@ -430,17 +438,20 @@ export const mountRenderer = async (
   container.appendChild(renderer.domElement)
 
   // transform controls
-  transformControls = new TransformControls(camera, renderer.domElement)
-  transformControls.enabled = false
-  transformControls.setColors(0xFF4466, 0x88FF44, 0x4488FF, 0xFFFFFF)
-  scene.add(transformControls.getHelper())
+  const mountTransformControls = new TransformControls(
+    mountCamera,
+    renderer.domElement,
+  )
+  mountTransformControls.enabled = false
+  mountTransformControls.setColors(0xFF4466, 0x88FF44, 0x4488FF, 0xFFFFFF)
+  mountScene.add(mountTransformControls.getHelper())
 
   // mouseHelper
   const mouseHelper = new MouseBoxHelper(renderer, 24)
 
   // controls
   const navigationControls = createEditorNavigationControls(
-    camera,
+    mountCamera,
     renderer.domElement,
   )
 
@@ -459,15 +470,15 @@ export const mountRenderer = async (
     navigationControls.update(delta)
 
     gridHelper.position.x =
-      Math.floor(camera.position.x / gridHelperSize) * gridHelperCellSize
+      Math.floor(mountCamera.position.x / gridHelperSize) * gridHelperCellSize
     gridHelper.position.z =
-      Math.floor(camera.position.z / gridHelperSize) * gridHelperCellSize
+      Math.floor(mountCamera.position.z / gridHelperSize) * gridHelperCellSize
 
     if (viewHelper.animating) {
       viewHelper.update(delta)
     }
 
-    renderer.render(scene, camera)
+    renderer.render(mountScene, mountCamera)
     viewHelper.render(renderer)
 
     mouseHelper.render()
@@ -483,8 +494,8 @@ export const mountRenderer = async (
 
     renderer.setSize(width, height, false)
 
-    camera.aspect = width / height
-    camera.updateProjectionMatrix()
+    mountCamera.aspect = width / height
+    mountCamera.updateProjectionMatrix()
   })
 
   resizeObserver.observe(container)
@@ -493,16 +504,16 @@ export const mountRenderer = async (
     const x = (mouseHelper.mouse.x / container.clientWidth) * 2 - 1
     const y = -(mouseHelper.mouse.y / container.clientHeight) * 2 + 1
 
-    raycaster.setFromCamera(new THREE.Vector2(x, y), camera)
-    const intersects = raycaster.intersectObjects(scene.children, true)
+    raycaster.setFromCamera(new THREE.Vector2(x, y), mountCamera)
+    const intersects = raycaster.intersectObjects(mountScene.children, true)
     if (intersects.length > 0) {
         // 3. The closest hit object
         const clickedMesh = intersects[0].object
         logger.log('Clicked object:', clickedMesh)
 
-        transformControls.attach(clickedMesh)
+        mountTransformControls.attach(clickedMesh)
     } else {
-      transformControls.detach()
+      mountTransformControls.detach()
     }
   }
 
@@ -520,163 +531,3 @@ export const mountRenderer = async (
     renderer.domElement.remove()
   }
 }
-
-// export async function mountScene2(container: HTMLElement): Promise<() => void> {
-
-//   // const bspLoader = new BSPLoader()
-//   const fileLoader = new THREE.FileLoader()
-//   fileLoader.setResponseType('arraybuffer')
-
-//   // const sceneFile = (await fileLoader.loadAsync('data/RESOURCES/WORLDS/sc_2421.scn')) as ArrayBuffer
-//   // const reader = new ZBinaryReader(Buffer.from(sceneFile))
-//   // const scn = Scene.read(reader)
-
-//   const ddsLoader = new DDSLoader()
-//   const ddsTexture = await ddsLoader.loadAsync('data/RESOURCES/TEXTURES/BACKDROPS/FBG00TA.DDS')
-
-//   const mip = ddsTexture.mipmaps[0]
-//   const imageData = new ImageData(
-//     new Uint8ClampedArray(mip.data),
-//     mip.width,
-//     mip.height,
-//   )
-//   const image = await createImageBitmap(imageData)
-
-//   const cubeTexture = new THREE.CubeTexture(Array(6).fill(image))
-//   cubeTexture.colorSpace = THREE.SRGBColorSpace
-//   cubeTexture.needsUpdate = true
-
-//   scene.background = cubeTexture
-
-//   // scene.add(bspFile)
-
-//   const onViewHelperPointerUp = (event: PointerEvent) => {
-//     if (event.button === 0) {
-//       viewHelper.handleClick(event)
-//     }
-//   }
-
-//   container.addEventListener('pointerup', onViewHelperPointerUp)
-
-//   let isRightMouseDown = false
-
-//   const onMouseDown = (event: MouseEvent) => {
-//     if (event.button !== 2) return
-
-//     isRightMouseDown = true
-//     controls.lock()
-//   }
-
-//   const onMouseUp = (event: MouseEvent) => {
-//     if (event.button !== 2) return
-
-//     isRightMouseDown = false
-//     controls.unlock()
-//   }
-
-//   const onContextMenu = (event: MouseEvent) => {
-//     event.preventDefault()
-//   }
-
-//   let speed = 10
-
-//   const onMouseWheel = (event: WheelEvent) => {
-//     if (event.deltaY < 0) {
-//       if (speed < 100) {
-//         speed += 10
-//       }
-//     } else {
-//       if (speed > 0) {
-//         speed -= 10
-//       }
-//     }
-//   }
-
-  // const mouse = new THREE.Vector2()
-
-  // const onPoinerMove = (event: PointerEvent) => {
-  //   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-  //   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-  // }
-
-  // const onClick = () => {
-  //   // raycaster.setFromCamera(mouse, camera)
-  //   // const intersects = raycaster.intersectObjects(scene.children, true)
-  //   // if (intersects.length > 0) {
-  //   //     // 3. The closest hit object
-  //   //     const clickedMesh = intersects[0].object
-  //   //     console.log('Clicked object:', clickedMesh)
-  //   // }
-  // }
-
-//   const onDoubleClick = () => {
-//     raycaster.setFromCamera(mouse, camera)
-
-//     const intersects = raycaster.intersectObjects(scene.children, true)
-
-//     if (intersects.length > 0) {
-//       // 3. The closest hit object
-//       const clickedMesh = intersects[0].object
-
-//       console.log('DB Clicked object:', clickedMesh)
-
-//       camera.position.copy(clickedMesh.position)
-//     }
-//   }
-
-//   renderer.domElement.addEventListener('mousedown', onMouseDown)
-//   renderer.domElement.addEventListener('wheel', onMouseWheel)
-//   window.addEventListener('mouseup', onMouseUp)
-//   window.addEventListener('pointermove', onPoinerMove)
-//   window.addEventListener('click', onClick)
-//   window.addEventListener('dblclick', onDoubleClick)
-//   renderer.domElement.addEventListener('contextmenu', onContextMenu)
-
-//   const keys = new Set<string>()
-
-//   const onKeyDown = (event: KeyboardEvent) => keys.add(event.code)
-//   const onKeyUp = (event: KeyboardEvent) => keys.delete(event.code)
-
-//   window.addEventListener('keydown', onKeyDown)
-//   window.addEventListener('keyup', onKeyUp)
-
-//   // await loadScene(scene, ambientLight)
-
-//   const animate = (timestamp: number) => {
-//     if (controls.isLocked && isRightMouseDown) {
-//       let forward = 0
-//       let right = 0
-
-//       if (keys.has('KeyW')) forward += 1
-//       if (keys.has('KeyS')) forward -= 1
-//       if (keys.has('KeyD')) right += 1
-//       if (keys.has('KeyA')) right -= 1
-
-//       const length = Math.hypot(forward, right) || 1
-//       forward /= length
-//       right /= length
-
-//       controls.moveForward(forward * speed * delta)
-//       controls.moveRight(right * speed * delta)
-
-//       if (keys.has('Space')) camera.position.y += speed * delta
-//       if (keys.has('ShiftLeft')) camera.position.y -= speed * delta
-//     }
-
-//   }
-
-//   return () => {
-//     container.removeEventListener('pointerup', onViewHelperPointerUp)
-
-//     renderer.domElement.removeEventListener('mousedown', onMouseDown)
-//     renderer.domElement.removeEventListener('wheel', onMouseWheel)
-//     window.removeEventListener('mouseup', onMouseUp)
-//     window.removeEventListener('pointermove', onPoinerMove)
-//     window.removeEventListener('click', onClick)
-//     window.removeEventListener('dblclick', onDoubleClick)
-//     renderer.domElement.removeEventListener('contextmenu', onContextMenu)
-
-//     window.removeEventListener('keydown', onKeyDown)
-//     window.removeEventListener('keyup', onKeyUp)
-//   }
-// }
