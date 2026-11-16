@@ -142,7 +142,10 @@ export class BSPLoader extends THREE.Loader<
         )
 
         try {
-          const texturesDirHandler = await getNestedDirectoryHandle(rootHandle, 'Resources/Textures/Worlds')
+          const texturesDirHandler = await getNestedDirectoryHandle(
+            rootHandle,
+            'Resources/Textures/Worlds',
+          )
 
           const group = this.parseBuffer(data, '', texturesDirHandler)
           onLoad(group)
@@ -314,12 +317,8 @@ export class BSPLoader extends THREE.Loader<
       : `${normalizedName}.BMP`
     const texture = texturesDirHandler
       ? new THREE.Texture()
-      : textureLoader.load(
-          filename,
-          undefined,
-          undefined,
-          (error) =>
-            console.warn(`Failed to load BSP texture ${filename}:${error}`),
+      : textureLoader.load(filename, undefined, undefined, (error) =>
+          console.warn(`Failed to load BSP texture ${filename}:${error}`),
         )
 
     if (texturesDirHandler) {
@@ -357,8 +356,9 @@ export class BSPLoader extends THREE.Loader<
         const file = await fileHandle.getFile()
         objectUrl = URL.createObjectURL(file)
 
-        const imageLoader = new THREE.ImageLoader(this.manager)
-          .setCrossOrigin(this.crossOrigin)
+        const imageLoader = new THREE.ImageLoader(this.manager).setCrossOrigin(
+          this.crossOrigin,
+        )
         imageLoader.load(
           objectUrl,
           (image) => {

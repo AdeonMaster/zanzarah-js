@@ -1,4 +1,8 @@
-export const getNestedDirectoryHandle = async (rootHandle: FileSystemDirectoryHandle, path: string, options?: { create?: boolean }) => {
+export const getNestedDirectoryHandle = async (
+  rootHandle: FileSystemDirectoryHandle,
+  path: string,
+  options?: { create?: boolean },
+) => {
   const parts = path.split('/').filter(Boolean)
   let currentHandle = rootHandle
 
@@ -9,4 +13,5 @@ export const getNestedDirectoryHandle = async (rootHandle: FileSystemDirectoryHa
   return currentHandle
 }
 
-export const normalizePath = (path: string) => path.replace('..', '').replaceAll('\\', '/')
+export const normalizePath = (path: string) =>
+  path.replace('..', '').replaceAll('\\', '/')

@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { mountRenderer } from '../three/scene'
 
-export default function EditorCanvas() {
+export type EditorCanvasProps = {
+  className?: string
+}
+
+export default function EditorCanvas({ className }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,5 +31,5 @@ export default function EditorCanvas() {
     }
   }, [])
 
-  return <div ref={containerRef} className="scene" />
+  return <div ref={containerRef} className={`scene ${className}`} />
 }

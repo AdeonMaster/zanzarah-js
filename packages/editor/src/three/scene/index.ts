@@ -2,6 +2,7 @@ import {
   LightType,
   RWBinaryFile,
   Scene,
+  TriggerType,
   ZBinaryReader,
 } from '@zanzarah.js/engine'
 import { RWString, RWTexture } from '@zanzarah.js/engine/rw'
@@ -10,21 +11,23 @@ import * as THREE from 'three'
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js'
 import { ViewHelper } from 'three/addons/helpers/ViewHelper.js'
 import { DDSLoader } from 'three/addons/loaders/DDSLoader.js'
+import { TransformControls } from 'three/examples/jsm/Addons.js'
+import { TriggerColliderType } from '../../../../engine/src/structures/scn/Trigger.js'
+import { getLogger } from '../../logger.js'
 import createEditorNavigationControls from '../helpers/EditorNavigationControls.js'
+import { MouseBoxHelper } from '../helpers/MouseBoxHelper.js'
 import { RadiusHelper } from '../helpers/RadiusHelper.js'
 import { BSPLoader } from '../loaders/BSPLoader.js'
 import DFFLoader from '../loaders/DFFLoader.js'
 import { getNestedDirectoryHandle, normalizePath } from '../utils/index.js'
-import { TriggerColliderType } from '../../../../engine/src/structures/scn/Trigger.js'
-import { MouseBoxHelper } from '../helpers/MouseBoxHelper.js'
-import { TransformControls } from 'three/examples/jsm/Addons.js'
-import { getLogger } from '../../logger.js'
 
 window.Buffer = Buffer
 
 const textureLoader = new THREE.TextureLoader()
 const ddsLoader = new DDSLoader()
 const dffLoader = new DFFLoader()
+  .setModelPath('resources/models/models')
+  .setTexturePath('resources/textures/models')
 const bspLoader = new BSPLoader()
 
 const raycaster = new THREE.Raycaster()
@@ -129,12 +132,19 @@ const logger = getLogger()
 // }
 
 const editorTextures = new Map<string, string>([
-  ['gizmo:directional-light', 'icons/directional-light.png'],
-  ['gizmo:point-light', 'icons/point-light.png'],
-  ['gizmo:audio', 'icons/audio.png'],
-  ['gizmo:effect', 'icons/effect.png'],
-  ['gizmo:trigger', 'icons/trigger.png'],
-  ['gizmo:waypoint', 'icons/waypoint.png'],
+  ['gizmo:directional-light', 'icons/gizmo/directional-light.png'],
+  ['gizmo:point-light', 'icons/gizmo/point-light.png'],
+  ['gizmo:audio', 'icons/gizmo/audio.png'],
+  ['gizmo:effect', 'icons/gizmo/effect.png'],
+  ['gizmo:trigger', 'icons/gizmo/trigger.png'],
+  ['gizmo:trigger-death', 'icons/gizmo/trigger-death.png'],
+  ['gizmo:trigger-door', 'icons/gizmo/trigger-door.png'],
+  ['gizmo:trigger-attack', 'icons/gizmo/trigger-attack.png'],
+  ['gizmo:trigger-camera', 'icons/gizmo/trigger-camera.png'],
+  ['gizmo:trigger-animal', 'icons/gizmo/trigger-animal.png'],
+  ['gizmo:trigger-animal-waypoint', 'icons/gizmo/trigger-animal-waypoint.png'],
+  ['gizmo:trigger-waypoint', 'icons/gizmo/trigger-waypoint.png'],
+  ['gizmo:waypoint', 'icons/gizmo/waypoint.png'],
 ])
 
 const loadedEditorTextures = new Map<string, THREE.Texture>()
@@ -171,16 +181,15 @@ const loadSceneBackdrop = async (backdropFileName: string) => {
         backdropFileName = 'fbgsm01p'
         break
       default:
-        console.error(`Unsupported dynamic backdrop ${backdropFileName}`)
+        logger.error(`Unsupported dynamic backdrop ${backdropFileName}`)
     }
   } else {
     logger.log(`static backdrop ${backdropFileName}`)
   }
 
-  const modelsDirHandler = await rootDirHandle.getDirectoryHandle(
-    'models',
-    { create: false },
-  )
+  const modelsDirHandler = await rootDirHandle.getDirectoryHandle('models', {
+    create: false,
+  })
   const backdropsDirHandler = await modelsDirHandler.getDirectoryHandle(
     'backdrops',
     { create: false },
@@ -192,14 +201,14 @@ const loadSceneBackdrop = async (backdropFileName: string) => {
   const backdropFile = await backdropFileHandler.getFile()
   // const backdropArrayBuffer = await backdropFile.arrayBuffer()
   // const backdropModel = RWBinaryFile.read(new ZBinaryReader(Buffer.from(backdropArrayBuffer)))
-  // console.log(backdropModel)
+  // logger.log(backdropModel)
 
   // const skyModel = await dffLoader.loadAsync(URL.createObjectURL(backdropFile))
   // scene.add(skyModel)
 
   // const backdropModelTexName = backdropModel[0].findAll(RWTexture)?.[0].findChild(RWString)?.value || ''
   // if (!backdropModelTexName) {
-  //   console.log('No texture')
+  //   logger.log('No texture')
   // }
 
   // const texturesDirHandler = await resourcesDirHandle.getDirectoryHandle('textures', { create: false })
@@ -217,7 +226,6 @@ const loadSceneBackdrop = async (backdropFileName: string) => {
 }
 
 const loadSceneEntities = async (scn: Scene) => {
-  
   // samples 3D
   for (const sample3D of scn.samples3D) {
     const gizmoIcon = loadedEditorTextures.get('gizmo:audio')
@@ -228,11 +236,7 @@ const loadSceneEntities = async (scn: Scene) => {
     const sprite = new THREE.Sprite(spriteMaterial)
     sprite.scale.set(1, 1, 1) // Set world-space dimen
 
-    sprite.position.set(
-      sample3D.pos.x,
-      sample3D.pos.y,
-      sample3D.pos.z,
-    )
+    sprite.position.set(sample3D.pos.x, sample3D.pos.y, sample3D.pos.z)
 
     scene.add(sprite)
   }
@@ -247,28 +251,28 @@ const loadSceneEntities = async (scn: Scene) => {
     const sprite = new THREE.Sprite(spriteMaterial)
     sprite.scale.set(1, 1, 1) // Set world-space dimen
 
-    sprite.position.set(
-      effect.pos.x,
-      effect.pos.y,
-      effect.pos.z,
-    )
+    sprite.position.set(effect.pos.x, effect.pos.y, effect.pos.z)
 
     scene.add(sprite)
   }
 
   // models
-  const modelsDirHandler = await getNestedDirectoryHandle(rootDirHandle, 'resources/models/models')
   for (const model of scn.models) {
     try {
-      const modelFileHandler = await modelsDirHandler.getFileHandle(`${model.filename}.dff`)
-      const modelFile = await modelFileHandler.getFile()
-      const ddfModel = await dffLoader.loadAsync(URL.createObjectURL(modelFile))
+      const ddfModel = await dffLoader.loadAsync(
+        rootDirHandle,
+        `${model.filename}.dff`,
+      )
 
       ddfModel.position.set(model.pos.x, model.pos.y, model.pos.z)
-      ddfModel.rotation.copy(new THREE.Euler(model.rot.x, model.rot.y, model.rot.z, 'XYZ'))
-      
+      ddfModel.lookAt(
+        ddfModel.position
+          .clone()
+          .add(new THREE.Vector3(model.rot.x, model.rot.y, model.rot.z)),
+      )
+
       scene.add(ddfModel)
-    } catch(e) {
+    } catch (e) {
       logger.error(e)
     }
   }
@@ -276,22 +280,51 @@ const loadSceneEntities = async (scn: Scene) => {
   // fo models
   for (const foModel of scn.foModels) {
     try {
-      const modelFileHandler = await modelsDirHandler.getFileHandle(`${foModel.filename}.dff`)
-      const modelFile = await modelFileHandler.getFile()
-      const ddfModel = await dffLoader.loadAsync(URL.createObjectURL(modelFile))
+      const ddfModel = await dffLoader.loadAsync(
+        rootDirHandle,
+        `${foModel.filename}.dff`,
+      )
 
       ddfModel.position.set(foModel.pos.x, foModel.pos.y, foModel.pos.z)
-      ddfModel.rotation.copy(new THREE.Euler(foModel.rot.x, foModel.rot.y, foModel.rot.z, 'XYZ'))
-      
+      ddfModel.lookAt(
+        ddfModel.position
+          .clone()
+          .add(new THREE.Vector3(foModel.rot.x, foModel.rot.y, foModel.rot.z)),
+      )
+
+      logger.log(foModel.worldDetailLevel)
+
       scene.add(ddfModel)
-    } catch(e) {
+    } catch (e) {
       logger.error(e)
     }
   }
 
   // triggers
   for (const trigger of scn.triggers) {
-    const gizmoIcon = loadedEditorTextures.get('gizmo:trigger')
+    let gizmoIconName = 'gizmo:trigger'
+    switch (trigger.type) {
+      case TriggerType.Doorway:
+        gizmoIconName = 'gizmo:trigger-door'
+        break
+      case TriggerType.NpcAttackPosition:
+        gizmoIconName = 'gizmo:trigger-attack'
+        break
+      case TriggerType.CameraPosition:
+        gizmoIconName = 'gizmo:trigger-camera'
+        break
+      case TriggerType.Animal:
+        gizmoIconName = 'gizmo:trigger-animal'
+        break
+      case TriggerType.AnimalWaypoint:
+        gizmoIconName = 'gizmo:trigger-animal-waypoint'
+        break
+      case TriggerType.Waypoint:
+        gizmoIconName = 'gizmo:trigger-waypoint'
+        break
+    }
+
+    const gizmoIcon = loadedEditorTextures.get(gizmoIconName)
     const spriteMaterial = new THREE.SpriteMaterial({
       map: gizmoIcon,
       color: 0xffffff,
@@ -299,19 +332,23 @@ const loadSceneEntities = async (scn: Scene) => {
     const sprite = new THREE.Sprite(spriteMaterial)
     sprite.scale.set(1, 1, 1) // Set world-space dimen
 
-    sprite.position.set(
-      trigger.pos.x,
-      trigger.pos.y,
-      trigger.pos.z,
-    )
+    sprite.position.set(trigger.pos.x, trigger.pos.y, trigger.pos.z)
 
     if (trigger.colliderType === TriggerColliderType.Sphere) {
       const radiusHelper = new RadiusHelper(trigger.radius)
       sprite.add(radiusHelper)
-    } else {
-      const box = new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(trigger.end.x - trigger.pos.x, trigger.end.y - trigger.pos.y, trigger.end.z - trigger.pos.z))
+    } else if (trigger.colliderType === TriggerColliderType.Box) {
+      const box = new THREE.Box3(
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(
+          trigger.end.x - trigger.pos.x,
+          trigger.end.y - trigger.pos.y,
+          trigger.end.z - trigger.pos.z,
+        ),
+      )
       const helper = new THREE.Box3Helper(box, 0x80a676)
       sprite.add(helper)
+    } else {
     }
 
     scene.add(sprite)
@@ -392,7 +429,7 @@ export const mountRenderer = async (
   // axes helper
   const axesHelper = new THREE.AxesHelper(5)
   // axesHelper.setColors(0xff0000, 0x00ff00, 0x0000ff)
-  axesHelper.setColors(0xFF4466, 0x88FF44, 0x4488FF)
+  axesHelper.setColors(0xff4466, 0x88ff44, 0x4488ff)
   axesHelper.material.fog = false
   axesHelper.material.depthWrite = false
   axesHelper.renderOrder = 2
@@ -443,7 +480,7 @@ export const mountRenderer = async (
     renderer.domElement,
   )
   mountTransformControls.enabled = false
-  mountTransformControls.setColors(0xFF4466, 0x88FF44, 0x4488FF, 0xFFFFFF)
+  mountTransformControls.setColors(0xff4466, 0x88ff44, 0x4488ff, 0xffffff)
   mountScene.add(mountTransformControls.getHelper())
 
   // mouseHelper
@@ -507,11 +544,11 @@ export const mountRenderer = async (
     raycaster.setFromCamera(new THREE.Vector2(x, y), mountCamera)
     const intersects = raycaster.intersectObjects(mountScene.children, true)
     if (intersects.length > 0) {
-        // 3. The closest hit object
-        const clickedMesh = intersects[0].object
-        logger.log('Clicked object:', clickedMesh)
+      // 3. The closest hit object
+      const clickedMesh = intersects[0].object
+      logger.log('Clicked object:', clickedMesh)
 
-        mountTransformControls.attach(clickedMesh)
+      mountTransformControls.attach(clickedMesh)
     } else {
       mountTransformControls.detach()
     }

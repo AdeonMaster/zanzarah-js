@@ -14,6 +14,7 @@ import {
 } from '@zanzarah.js/engine/rw'
 import { Buffer } from 'buffer'
 import * as THREE from 'three'
+import { getNestedDirectoryHandle } from '../utils/index.js'
 
 const COLOR_MULTIPLIER = 2
 
@@ -29,49 +30,91 @@ interface ParsedGeometry {
   skin: RWSkinPLG | null
 }
 
-export class DFFLoader extends THREE.Loader<THREE.Group, string> {
-  load(
-    url: string,
-    onLoad: (group: THREE.Group) => void,
+export class DFFLoader {
+  private modelPath = ''
+  private texturePath = ''
+
+  setModelPath(path: string): this {
+    this.modelPath = this.normalizeDirectoryPath(path)
+    return this
+  }
+
+  setTexturePath(path: string): this {
+    this.texturePath = this.normalizeDirectoryPath(path)
+    return this
+  }
+
+  async loadAsync(
+    rootDirHandler: FileSystemDirectoryHandle,
+    fileName: string,
     onProgress?: (event: ProgressEvent) => void,
-    onError?: (error: unknown) => void,
-  ): void {
-    const fileLoader = new THREE.FileLoader(this.manager)
-      .setPath(this.path)
-      .setResponseType('arraybuffer')
-      .setWithCredentials(this.withCredentials)
-      .setRequestHeader(this.requestHeader)
-
-    fileLoader.load(
-      url,
-      (data) => {
-        try {
-          const modelPath = this.path ? `${this.path}${url}` : url
-          const texturePath =
-            this.resourcePath || this.texturePathByModelPath(modelPath)
-          onLoad(this.parseBuffer(data as ArrayBuffer, texturePath))
-        } catch (error) {
-          if (onError) {
-            onError(error)
-          } else {
-            console.error('Failed to parse DFF file:', error)
-          }
-        }
-      },
-      onProgress,
-      onError,
+  ): Promise<THREE.Group> {
+    const normalizedName = fileName.replaceAll('\\', '/').replace(/^\/+/, '')
+    if (normalizedName.split('/').some((part) => part === '..')) {
+      throw new Error(
+        `DFF path must stay within the selected directory: ${fileName}`,
+      )
+    }
+    const modelRelativePath = [this.modelPath, normalizedName]
+      .filter(Boolean)
+      .join('/')
+    const modelParts = modelRelativePath.split('/').filter(Boolean)
+    const modelFileName = modelParts.pop()
+    if (!modelFileName) throw new Error('A DFF file name is required')
+    const modelDirectory = modelParts.length
+      ? await getNestedDirectoryHandle(rootDirHandler, modelParts.join('/'))
+      : rootDirHandler
+    const modelFile = await (
+      await modelDirectory.getFileHandle(modelFileName)
+    ).getFile()
+    const data = await modelFile.arrayBuffer()
+    onProgress?.(
+      new ProgressEvent('progress', {
+        lengthComputable: true,
+        loaded: data.byteLength,
+        total: modelFile.size,
+      }),
     )
-  }
 
-  parse(data: ArrayBuffer): THREE.Group {
-    return this.parseBuffer(
-      data,
-      this.resourcePath || this.texturePathByModelPath(this.path),
-    )
-  }
-
-  private parseBuffer(data: ArrayBuffer, texturePath: string): THREE.Group {
     const sections = RWBinaryFile.read(new ZBinaryReader(Buffer.from(data)))
+    const textureUrls = new Map<string, string>()
+    const textureDirectory = this.texturePath
+      ? await getNestedDirectoryHandle(rootDirHandler, this.texturePath)
+      : rootDirHandler
+    for (const textureSection of sections.flatMap((section) =>
+      section.findAll(RWTexture),
+    )) {
+      const [colorName, alphaName] = textureSection
+        .findChildren(RWString)
+        .map((item) => item.value.trim())
+      for (const name of [colorName, alphaName]) {
+        if (!name) continue
+        const normalized = name
+          .replaceAll('\\', '/')
+          .split('/')
+          .pop()!
+          .toUpperCase()
+        const filename = /\.[A-Z0-9]+$/.test(normalized)
+          ? normalized
+          : `${normalized}.BMP`
+        if (textureUrls.has(filename)) continue
+        try {
+          const file = await (
+            await textureDirectory.getFileHandle(filename)
+          ).getFile()
+          textureUrls.set(filename, URL.createObjectURL(file))
+        } catch {
+          // Missing textures are handled as failed TextureLoader requests below.
+        }
+      }
+    }
+    return this.parseSections(sections, textureUrls)
+  }
+
+  private parseSections(
+    sections: ReturnType<typeof RWBinaryFile.read>,
+    textureUrls: Map<string, string>,
+  ): THREE.Group {
     const clump = sections.find(
       (section): section is RWClump => section instanceof RWClump,
     )
@@ -86,9 +129,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
       throw new Error('No geometry found in DFF data')
     }
 
-    const textureLoader = new THREE.TextureLoader(this.manager)
-      .setPath(texturePath)
-      .setCrossOrigin(this.crossOrigin)
+    const textureLoader = new THREE.TextureLoader()
     const group = new THREE.Group()
     const frames = clump.findChild(RWFrameList)?.struct?.frames ?? []
     const frameObjects = this.createFrameHierarchy(frames, group)
@@ -101,7 +142,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
 
       let parsed = parsedGeometries.get(geometryIndex)
       if (!parsed) {
-        parsed = this.parseGeometry(geometrySection, textureLoader)
+        parsed = this.parseGeometry(geometrySection, textureLoader, textureUrls)
         parsedGeometries.set(geometryIndex, parsed)
       }
 
@@ -224,6 +265,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
   private parseGeometry(
     section: RWGeometry,
     textureLoader: THREE.TextureLoader,
+    textureUrls: Map<string, string>,
   ): ParsedGeometry {
     const data = section.struct
     const baseTarget = data?.morphTargets[0]
@@ -353,6 +395,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
     const materials = this.parseMaterials(
       section.findChild(RWMaterialList),
       textureLoader,
+      textureUrls,
     )
     let groupStart = 0
     let currentMaterialIndex: number | null = null
@@ -404,6 +447,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
   private parseMaterials(
     materialList: RWMaterialList | null,
     textureLoader: THREE.TextureLoader,
+    textureUrls: Map<string, string>,
   ): THREE.MeshBasicMaterial[] {
     const fallbackMaterial = () =>
       new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true })
@@ -418,7 +462,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
     if (!materialIndices?.length) {
       return definitions.length
         ? definitions.map((section) =>
-            this.parseMaterial(section, textureLoader),
+            this.parseMaterial(section, textureLoader, textureUrls),
           )
         : [fallbackMaterial()]
     }
@@ -432,7 +476,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
         nextDefinition += 1
         materials.push(
           section
-            ? this.parseMaterial(section, textureLoader)
+            ? this.parseMaterial(section, textureLoader, textureUrls)
             : fallbackMaterial(),
         )
       } else {
@@ -446,6 +490,7 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
   private parseMaterial(
     section: RWMaterial,
     textureLoader: THREE.TextureLoader,
+    textureUrls: Map<string, string>,
   ): THREE.MeshBasicMaterial {
     const material = new THREE.MeshBasicMaterial({
       color: section.struct?.color
@@ -460,10 +505,20 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
       .findChildren(RWString)
       .map((string) => string.value.trim())
     if (colorName) {
-      material.map = this.loadTexture(colorName, textureLoader, true)
+      material.map = this.loadTexture(
+        colorName,
+        textureLoader,
+        textureUrls,
+        true,
+      )
     }
     if (alphaName) {
-      material.alphaMap = this.loadTexture(alphaName, textureLoader, false)
+      material.alphaMap = this.loadTexture(
+        alphaName,
+        textureLoader,
+        textureUrls,
+        false,
+      )
       material.transparent = true
       material.depthWrite = false
       material.alphaTest = 0.05
@@ -475,17 +530,20 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
   private loadTexture(
     name: string,
     textureLoader: THREE.TextureLoader,
+    textureUrls: Map<string, string>,
     isColor: boolean,
   ): THREE.Texture {
     const normalizedName = name.trim().replaceAll('\\', '/').toUpperCase()
     const filename = /\.[A-Z0-9]+$/.test(normalizedName)
       ? normalizedName
       : `${normalizedName}.BMP`
-    const texture = textureLoader.load(
-      filename,
-      undefined,
-      undefined,
-      (error) => console.warn(`Failed to load DFF texture ${filename}:`, error),
+    const url = textureUrls.get(filename)
+    if (!url) {
+      console.warn(`Failed to load DFF texture ${filename}`)
+      return new THREE.Texture()
+    }
+    const texture = textureLoader.load(url, undefined, undefined, (error) =>
+      console.warn(`Failed to load DFF texture ${filename}:`, error),
     )
 
     texture.wrapS = THREE.RepeatWrapping
@@ -495,11 +553,14 @@ export class DFFLoader extends THREE.Loader<THREE.Group, string> {
     return texture
   }
 
-  private texturePathByModelPath(modelPath: string): string {
-    return THREE.LoaderUtils.extractUrlBase(modelPath).replace(
-      /(^|\/)MODELS(?=\/|$)/i,
-      '$1TEXTURES',
-    )
+  private normalizeDirectoryPath(path: string): string {
+    const normalized = path.replaceAll('\\', '/').replace(/^\/+|\/+$/g, '')
+    if (normalized.split('/').some((part) => part === '..')) {
+      throw new Error(
+        `DFF directory path must stay within the selected directory: ${path}`,
+      )
+    }
+    return normalized
   }
 
   private createSkeleton(

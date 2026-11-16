@@ -57,5 +57,5 @@ export enum BehaviourType {
   FlyAwayInvisible = 2101,
   FlyAwayStraight = 2102,
 
-  Unknown = -1
+  Unknown = -1,
 }

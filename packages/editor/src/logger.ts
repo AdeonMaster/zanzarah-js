@@ -1,4 +1,5 @@
 export type LoggerEntry = {
+  id: number
   type: number
   message: string
   timestamp: number
@@ -14,9 +15,12 @@ export class Logger {
   }
 
   private _log(type: number, ...args: unknown[]) {
+    const id = this.entries.length + 1
+
     this.entries = [
       ...this.entries,
       {
+        id,
         type,
         message: args.map((msg) => String(msg)).join(' '),
         timestamp: Date.now(),
